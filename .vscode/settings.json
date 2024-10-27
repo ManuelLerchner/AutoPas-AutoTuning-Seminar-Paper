@@ -1,0 +1,71 @@
+{
+    "latex-workshop.latex.recipes": [
+        {
+            "name": "slides",
+            "tools": [
+                "pdflatex",
+                "bibtex",
+                "pdflatex",
+                "pdflatex"
+            ]
+        },
+        {
+            "name": "pdflatexdraft, makeglossaries, bibtex, pdflatexdraft, pdflatex",
+            "tools": [
+                "pdflatexdraft",
+                "makeglossaries",
+                "bibtex",
+                "pdflatexdraft",
+                "pdflatex"
+            ]
+        }
+    ],
+    "latex-workshop.latex.tools": [
+        {
+            "name": "pdflatexdraft",
+            "command": "pdflatex",
+            "args": [
+                "-synctex=1",
+                "-draftmode",
+                "-interaction=nonstopmode",
+                "-shell-escape",
+                "-halt-on-error",
+                "-file-line-error",
+                "-lualatex",
+                "%DOC%"
+            ]
+        },
+        {
+            "name": "makeglossaries",
+            "command": "makeglossaries",
+            "args": [
+                "%DOCFILE%"
+            ]
+        },
+        {
+            "name": "bibtex",
+            "command": "bibtex",
+            "args": [
+                "%DOCFILE%"
+            ]
+        },
+        {
+            "name": "pdflatex",
+            "command": "pdflatex",
+            "args": [
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-shell-escape",
+                "-halt-on-error",
+                "-file-line-error",
+                "%DOC%"
+            ]
+        }
+    ],
+    "grammarly.selectors": [
+        {
+            "language": "latex",
+            "scheme": "file"
+        }
+    ]
+}
