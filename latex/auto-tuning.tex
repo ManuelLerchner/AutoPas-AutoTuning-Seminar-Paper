@@ -13,6 +13,8 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{algorithmicx}
+\usepackage{hyperref}
+\usepackage{todonotes}
 
 \begin{document}
 
@@ -36,9 +38,10 @@
 \end{IEEEkeywords}
 
 \section{Introduction}
-Molecular dynamics simulations represent a computational cornerstone in various scientific fields, from materials science to biochemistry. These simulations, while powerful, face significant computational challenges that necessitate sophisticated optimization techniques. The efficiency of MD simulations heavily depends on algorithm selection and performance optimization, particularly in handling particle interactions and force calculations.
+Molecular dynamics simulations represent a computational cornerstone in various scientific fields, from materials science to biochemistry. To deliver accurate results, these simulations typically make use of complex, and computationally intensive interaction-models acting on enourmous number of particles. The performance of these simulations is highly dependent on the efficiency of the underlying algorithms and benefit significantly from simulation state dependent optimizations. \todo{cite}
 
-AutoPas introduces a novel approach to these challenges through its advanced auto-tuning capabilities \cite{Gratl2019AutoPasAF}. This framework represents a significant advancement in the field of MD simulations, offering dynamic optimization capabilities that adapt to varying simulation conditions.
+
+All modern MD engines, such as GROMACS, LAMMPS, and AutoPas, implement sophisticated optimization techniques to improve performance and scalability. These techniques include auto-tuning, dynamic load balancing, and GPU acceleration. In this paper, we focus on the auto-tuning capabilities of these engines, examining their effectiveness in optimizing performance across different simulation scenarios. We compare the auto-tuning strategies of GROMACS, LAMMPS, and AutoPas, highlighting the strengths and limitations of each approach. Our analysis provides insights into the impact of auto-tuning on MD simulation performance and scalability, offering guidance for future developments in this field.
 
 \subsection{Problem Statement}
 The primary challenges in MD simulations include:
