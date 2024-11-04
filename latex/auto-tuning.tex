@@ -13,7 +13,6 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{algorithmicx}
-\usepackage{hyperref}
 \usepackage{todonotes}
 
 \begin{document}
@@ -30,7 +29,8 @@
 \maketitle
 
 \begin{abstract}
-    Molecular dynamics (MD) simulations face significant computational challenges that necessitate efficient algorithm selection and performance optimization. This paper examines the auto-tuning capabilities of AutoPas, a modern MD framework, and provides a comparative analysis with other prominent MD engines such as GROMACS and LAMMPS. We analyze different approaches to static and dynamic optimization, evaluating their effectiveness in various simulation scenarios. Our findings highlight the strengths and limitations of different auto-tuning strategies, providing insights for future developments in MD simulation optimization.
+    Molecular dynamics (MD) simulations face significant computational challenges that require highly optimized simulation engines to deal with the enormous number of particles present in modern simulations. Naturally researchers have put a lot of effort into developing algorithms and frameworks that can efficiently simulate these systems. This paper examines the auto-tuning capabilities of AutoPas, a modern MD framework, and provides a comparative analysis with other prominent MD engines such as GROMACS and LAMMPS. We analyze the approaches to static and dynamic optimization and evaluate their effectiveness in various simulation scenarios. Furthermore, we investigate a possible improvement to the auto-tuning capabilities of AutoPas by introducing an early stopping mechanism to reduce the overhead the parameter space exploration.
+    \todo{conclusion}
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -38,10 +38,17 @@
 \end{IEEEkeywords}
 
 \section{Introduction}
-Molecular dynamics simulations represent a computational cornerstone in various scientific fields, from materials science to biochemistry. To deliver accurate results, these simulations typically make use of complex, and computationally intensive interaction-models acting on enourmous number of particles. The performance of these simulations is highly dependent on the efficiency of the underlying algorithms and benefit significantly from simulation state dependent optimizations. \todo{cite}
+
+Molecular dynamics simulations represent a computational cornerstone in various scientific fields, from materials science to biochemistry. To deliver accurate results, these simulations typically make use of complex, and computationally intensive interaction-models acting on enourmous number of particles. For simulation engines to be practical, they must be highly optimized to handle the computational load efficiently and utilize available resources effectively.
+
+Prominent optimization techniques used in modern molecular dynamics (MD) engines fall into two main categories: static and dynamic optimization. Static optimizations rely on predefined configurations and performance models, often fine-tuned for specific hardware architectures. These optimizations include strategies like memory layout optimization, vectorization, and architecture-specific instruction use (e.g., SIMD) \todo{Efficient Computation and Optimization Techniques for Molecular Dynamics Simulations, or similar}.
+
+Modern compiler frameworks such as Kokkos and SYCL further abstract hardware-specific optimizations, enabling more portable code across different hardware platforms (e.g., GPUs, CPUs). Kokkos provides a performance-portable parallel programming model that supports diverse high-performance computing environments, while SYCL, a standard by the Khronos Group, facilitates single-source C++ for heterogeneous platform \todo{The Kokkos EcoSystem: Comprehensive Performance Portability for High-Performance Computing; SYCL specifications or Khronos Group publications}.
+
+In contrast, dynamic optimizations adjust parameters based on the current simulation state and the actual hardware performance. Unlike static optimizations, which are set before the simulation begins, dynamic optimizations allow for adjustments throughout the simulation. This approach enables MD engines to periodically measure and respond to actual performance, optimizing parameters like load balancing, cache locality, and communication patterns to improve efficiency under complex and possibly changing conditions \todo{CITE: Studies on dynamic tuning in MD simulations or load balancing techniques}.
 
 
-All modern MD engines, such as GROMACS, LAMMPS, and AutoPas, implement sophisticated optimization techniques to improve performance and scalability. These techniques include auto-tuning, dynamic load balancing, and GPU acceleration. In this paper, we focus on the auto-tuning capabilities of these engines, examining their effectiveness in optimizing performance across different simulation scenarios. We compare the auto-tuning strategies of GROMACS, LAMMPS, and AutoPas, highlighting the strengths and limitations of each approach. Our analysis provides insights into the impact of auto-tuning on MD simulation performance and scalability, offering guidance for future developments in this field.
+In this paper, we mainly focus on the dynamic optimization techniques used in AutoPas, a modern MD simulation framework, and compare its auto-tuning capabilities with other prominent MD engines like GROMACS and LAMMPS. We analyze the effectiveness of auto-tuning in optimizing performance across different simulation scenarios and discuss the strengths and limitations of each approach. Furthermore, we evaluate an improvement to the tuning capabilities of AutoPas by introducing an early stopping mechanism reduce the overhead of parameter space exploration.
 
 \subsection{Problem Statement}
 The primary challenges in MD simulations include:
@@ -315,6 +322,8 @@ Future research directions include:
     \item Integration of machine learning techniques for performance prediction
     \item Collaboration between MD engine developers to share optimization strategies
 \end{itemize}
+
+\cite{Gratl2019AutoPasAF}
 
 
 \bibliographystyle{plain}
