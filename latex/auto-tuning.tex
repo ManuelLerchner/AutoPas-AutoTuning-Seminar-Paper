@@ -48,85 +48,34 @@ Modern compiler frameworks such as Kokkos and SYCL further abstract hardware-spe
 In contrast, dynamic optimizations adjust parameters based on the current simulation state and the actual hardware performance. Unlike static optimizations, which are set before the simulation begins, dynamic optimizations allow for adjustments throughout the simulation. This approach enables MD engines to periodically measure and respond to actual performance, optimizing parameters like load balancing, cache locality, and communication patterns to improve efficiency under complex and possibly changing conditions \todo{CITE: Studies on dynamic tuning in MD simulations or load balancing techniques}.
 
 
-In this paper, we mainly focus on the dynamic optimization techniques used in AutoPas, a modern MD simulation framework, and compare its auto-tuning capabilities with other prominent MD engines like GROMACS and LAMMPS. We analyze the effectiveness of auto-tuning in optimizing performance across different simulation scenarios and discuss the strengths and limitations of each approach. Furthermore, we evaluate an improvement to the tuning capabilities of AutoPas by introducing an early stopping mechanism reduce the overhead of parameter space exploration.
+In particular, we will focus on the auto-tuning capabilities of AutoPas, a modern MD framework that focuses on dynamic optimization techniques to achieve high performance in complex and possibly changing simulation scenarios. We will compare AutoPas's auto-tuning capabilities with other prominent MD engines, such as GROMACS and LAMMPS, to evaluate their effectiveness in various simulation scenarios. We will also investigate a possible improvement to the auto-tuning capabilities of AutoPas by introducing an early stopping mechanism to reduce the overhead of parameter space exploration.
 
-\subsection{Problem Statement}
-The primary challenges in MD simulations include:
-\begin{itemize}
-    \item Efficient particle interaction calculations
-    \item Optimal algorithm selection for different simulation phases
-    \item Dynamic adaptation to changing system conditions
-    \item Resource utilization optimization
-\end{itemize}
-
-\subsection{Challenges in MD Simulations}
-
-\begin{itemize}
-    \item Molecular dynamics simulations model the behavior of atoms and molecules over time.
-    \item These simulations are used in various scientific fields, including chemistry, physics, and materials science.
-    \item MD simulations are computationally intensive and require efficient algorithms for accurate results.
-\end{itemize}
-
-\subsection{Importance of Auto-Tuning}
-\begin{itemize}
-    \item Auto-tuning techniques optimize simulation performance by dynamically adjusting parameters.
-    \item Auto-tuning is essential for achieving optimal performance in complex simulation scenarios.
-    \item AutoPas's auto-tuning capabilities provide a competitive advantage in MD simulations.
-\end{itemize}
 
 \section{State of the Art in MD Simulations}
 
 
 \subsection{GROMACS}
-GROMACS implements several optimization techniques:
-
-\begin{itemize}
-    \item Thread-MPI implementation
-    \item GPU acceleration strategies
-    \item Dynamic load balancing
-\end{itemize}
 
 \subsubsection{Static Optimization Techniques}
 
-\begin{itemize}
-    \item GROMACS employs static optimization techniques for initial parameter selection.
-    \item These techniques are based on predefined configurations and performance models.
-    \item Static optimization provides a baseline for performance evaluation and comparison.
-\end{itemize}
 
 \subsubsection{Dynamic Optimization Strategies}
 
-\begin{itemize}
-    \item GROMACS's dynamic optimization strategies include auto-tuning for runtime adaptation.
-    \item These strategies adjust parameters based on system conditions and performance metrics.
-    \item Dynamic optimization enables GROMACS to adapt to changing simulation scenarios.
-\end{itemize}
+
+
 
 \subsection{LAMMPS}
 
-\subsubsection{Optimization Techniques}
-\begin{itemize}
-    \item Kokkos package functionality
-    \item USER-INTEL package optimizations
-    \item CUDA/GPU implementations
-\end{itemize}
-
-\subsubsection{Auto-Tuning Capabilities}
-
-\begin{itemize}
-    \item LAMMPS features auto-tuning capabilities through its Kokkos package.
-    \item The Kokkos package provides dynamic optimization for performance tuning.
-    \item LAMMPS's auto-tuning capabilities enhance its adaptability and performance.
-\end{itemize}
+\subsubsection{Static Optimization Techniques}
 
 
-\subsection{Current Limitations}
+\subsubsection{Dynamic Optimization Strategies}
 
-\begin{itemize}
-    \item Existing MD engines face challenges in adapting to changing system conditions.
-    \item Static optimization techniques may not be sufficient for complex simulation scenarios.
-    \item Limited auto-tuning capabilities hinder performance optimization in dynamic environments.
-\end{itemize}
+
+
+\subsection*{Limitations of those Approaches}
+
+As mentioned earlier, both GROMACS and LAMMPS focus primarily on static optimization. While these techniques are heavily optimized, both engines are not capable of performing datastructure and algorithm changes at runtime. This limitation can lead to suboptimal performance in situations where the chosen implementation is not optimal. Those situations can also arise during the simulation, when the simulation state changes such that other datastructures or algorithms would be more efficient.
 
 
 \section{AutoPas Auto-Tuning Framework}
