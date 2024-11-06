@@ -217,30 +217,42 @@ The first benchmark is performed with the \textit{Exploding Liquid} scenario pre
     \caption{Total Simulation Time for Exploding Liquid Simulation with Early Stopping divided in tuning and simulation phases. The total simulation time is minimal at a maximum allowed slowdown factor of $\approx5$.}
 \end{figure}
 
+Compared to FullSearch without early stopping, the early stopping mechanism can reduce the total simulation time from \todo{X} to \todo{Y} seconds. This is a reduction of \todo{Z}\%.
 
-\subsubsection{Trade-offs and Considerations}
-While early stopping provides significant benefits, several factors require careful consideration:
+\subsubsection{Spinodal Decomposition Simulation}
 
-\begin{itemize}
-    \item \textbf{Threshold Selection:} The performance threshold must balance between aggressive pruning and the risk of missing optimal configurations.
+The second benchmark is performed with the \textit{Spinodal Decomposition} scenario present in the \texttt{md-flexible} framework. The simulation consists of 100.000 particles that are simulated with a Lennard-Jones potential. The simulation is run with 14 threads on a single node of the CoolMUC2 supercomputer.
 
-    \item \textbf{Workload Sensitivity:} Different simulation scenarios may require different early stopping strategies. AutoPas adapts its thresholds based on workload characteristics.
+\todo{Add Spinodal Decomposition Benchmark Results}
 
-    \item \textbf{Cold-Start Handling:} Special considerations are needed during the initial tuning phase when limited performance data is available.
-\end{itemize}
 
-Early stopping represents a crucial optimization in AutoPas's tuning strategy, effectively addressing the overhead challenges inherent in auto-tuning systems while maintaining robust performance optimization capabilities.
 
-\newpage
+Compared to FullSearch without early stopping, the early stopping mechanism can reduce the total simulation time from \todo{X} to \todo{Y} seconds. This is a reduction of \todo{Z}\%.
+
+
+\subsubsection{Early Stopping combined with Tuning Strategies}
+
+\todo{todo}
+
 
 \section{Analysis and Discussion}
+
+All evaluated benchmarks show that there exists just a slim range of optimal thresholds for the early stopping mechanism which actually reduce the total simulation time. This is expected, the two corner cases $maxAllowedSlowdown \to 1$ and $maxAllowedSlowdown \to \infty$ are expected to perform poorly. $maxAllowedSlowdown \to 1$ essentially results in tuning phases with just one sample per configuration, which is not enough to get a good estimate of the performance of a configuration and causes simulation phases with suboptimal configurations. On the other hand, $maxAllowedSlowdown \to \infty$ results in the early stopping mechanism never aborting a configuration, which is equivalent to always evaluating all samples of a configuration, even if the configuration is known to be suboptimal.
+
+Consequently, the optimal threshold for the early stopping mechanism is a trade-off between the overhead of evaluating suboptimal configurations and the risk of missing optimal configurations due to noise in the performance measurements.
+
+From the executed benchmarks, we deduce that the optimal threshold for the early stopping mechanism is around \todo{X} for the \textit{Exploding Liquid} scenario and around \todo{Y} for the \textit{Spinodal Decomposition} scenario, but it is expected that the optimal threshold is highly dependent on the specific simulation scenario and the environment the simulation is run in.
+
+It is howerver noteworthy that the early stopping mechanism never caused a significant slowdown of the simulation, even if poor thresholds were chosen.
+
+We conclude that the (naive) early stopping mechanism is a valuable addition to the AutoPas framework, as it can reduce the total simulation time significantly without causing any significant slowdowns.
 
 
 \subsection{Feature Comparison of MD Engines}
 
 
 % Include a comparison table
-\begin{table}[!t]
+\begin{table}[H]
     \caption{Feature Comparison of MD Engines}
     \label{table_comparison}
     \centering
@@ -274,11 +286,13 @@ Different engines excel in various scenarios:
 \end{itemize}
 
 \subsection{Demonstration of Benefits of AutoTuning}
-\begin{itemize}
-    \item Performance improvement
-    \item Scalability
-    \item Adaptability
-\end{itemize}
+
+Even though AutoPas is designed to perform periodic auto-tuning, it often sufficient to just perform a single tuning phase at the beginning of the simulation, as many scenarios tend to behave fairly stable over time.
+Simulating an inhomogeneous scenario can sometimes benefit from re-tuning the configuration after a number of simulation steps, especially when using a MPI environment with multiple nodes. Inhomogeneous scenarios can cause the load to be distributed unevenly both across the nodes and across time steps, further increasing the potential benefits of periodically re-tuning the configuration on each node.
+
+The currently provided example runs from \texttt{md-flexible} are not sufficient to demonstrate the benefits of periodic re-tuning \todo{cite data from ba}. More complex scenarios, most likely involving multiple nodes and a high number of particles, are required to demonstrate the benefits of periodic re-tuning.
+
+
 
 \subsection{Performance Comparison}
 \begin{itemize}
