@@ -10,10 +10,9 @@
             ]
         },
         {
-            "name": "pdflatexdraft, makeglossaries, bibtex, pdflatexdraft, pdflatex",
+            "name": "pdflatexdraft, bibtex, pdflatexdraft, pdflatex",
             "tools": [
                 "pdflatexdraft",
-                "makeglossaries",
                 "bibtex",
                 "pdflatexdraft",
                 "pdflatex"
@@ -33,13 +32,6 @@
                 "-file-line-error",
                 "-lualatex",
                 "%DOC%"
-            ]
-        },
-        {
-            "name": "makeglossaries",
-            "command": "makeglossaries",
-            "args": [
-                "%DOCFILE%"
             ]
         },
         {

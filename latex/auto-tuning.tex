@@ -8,12 +8,39 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{listings}
-\usepackage{subfigure}
+\usepackage{subcaption}
 \usepackage{multirow}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{algorithmicx}
 \usepackage{todonotes}
+\usepackage{url}
+\usepackage{caption}  
+\usepackage{tcolorbox}
+\usepackage{hyperref}
+
+\hypersetup{hidelinks}
+\newcommand{\algorithmautorefname}{Algorithm}
+\captionsetup[algorithm]{name=Alg.} 
+
+\tcbuselibrary{listingsutf8}
+\newtcbox{\redbox}[1][]{
+  on line, 
+  boxsep=1pt, 
+  left=1pt, 
+  right=1pt, 
+  top=1pt, 
+  bottom=1pt, 
+  colframe=red!75!black, 
+  colback=red!10, 
+  boxrule=0.5pt, 
+  rounded corners,
+  #1
+}
+
+\algrenewcommand\algorithmicindent{0.8em} 
+
+
 
 \begin{document}
 
@@ -115,76 +142,81 @@ AutoPas employs several auto-tuning strategies:
     \item Performance profiling for optimization
 \end{itemize}
 
+\newpage
+\newpage
 
+\section{Early Stopping Optimization}
 
-\subsection{Early Stopping Optimization}
-A significant challenge in auto-tuning systems is managing the overhead introduced by exhaustive parameter space exploration. AutoPas addresses this challenge through an intelligent early stopping mechanism, which significantly reduces the tuning overhead while maintaining near-optimal configuration selection.
+As identified by \cite{autopas_issue673}\cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}, overhead caused by evaluating subobtimal configurations during the tuning phase can be a significant bottleneck in the performance of the AutoPas framework. Even though the tuning strategies employed by AutoPas are highly efficient, they still tend to suggest a large number of configurations that are not optimal. Rule driven tuning strategies such as \textit{RuleBasedTuning} and \textit{FuzzyTuning} can mitigate this problem to some extent, but due to the complexity of particle simulations, those rule-bases are expected to be highly incomplete.
 
-\subsubsection{Motivation}
-Traditional auto-tuning approaches often explore the entire configuration space, leading to:
-\begin{itemize}
-    \item Excessive time spent evaluating suboptimal configurations
-    \item Unnecessary computational overhead during the tuning phase
-    \item Delayed convergence to optimal parameters
-\end{itemize}
-
-\subsubsection{Implementation}
-The early stopping mechanism in AutoPas operates on several key principles:
-
-\begin{enumerate}
-    \item \textbf{Performance Boundary Detection:} During the tuning phase, AutoPas maintains a running estimate of the best achievable performance based on previously evaluated configurations. When a configuration's performance falls significantly below this estimate, the evaluation is terminated early.
-
-    \item \textbf{Statistical Confidence Tracking:} The system accumulates performance statistics for different configuration classes. These statistics inform decisions about which configurations warrant complete evaluation and which can be terminated early.
-
-    \item \textbf{Adaptive Thresholding:} The early stopping threshold is dynamically adjusted based on:
-          \begin{itemize}
-              \item Current best-known performance
-              \item System state and workload characteristics
-              \item Historical performance patterns
-          \end{itemize}
-\end{enumerate}
-
-\subsubsection{Performance Impact}
-Early stopping significantly improves AutoPas's efficiency:
+All mentioned sources suggest that some form of \textit{early stopping} mechanism could be beneficial for the AutoPas framework. The primarily goal of such a mechanism would be to detect tuning-iterations that take much longer than the currently best known configuration and stop the evaluation of those configurations early. There are two approaches to this problem:
 
 \begin{itemize}
-    \item \textbf{Reduced Tuning Overhead:} Experiments show up to 70\% reduction in tuning time compared to exhaustive search approaches.
-
-    \item \textbf{Quality Preservation:} Despite evaluating fewer configurations completely, the mechanism maintains 95-98\% of the performance achieved through exhaustive tuning.
-
-    \item \textbf{Adaptive Behavior:} The system remains responsive to changing conditions while avoiding the overhead of unnecessary parameter exploration.
+    \item \textbf{Stopping Further Samples:} Currently AutoPas supports testing a certain parameter configuration multiple times to get a more accurate and stable performance measurement. A simple way to implement early stopping would be to stop the evaluation of further samples of a configuration if the performance of a sample is significantly worse than the best known configuration. The implementation of this approach would be relatively simple, but it is fairly course grained as all started samples would still be evaluated fully.
+    \item \textbf{Interrupting the Evaluation:} A more fine grained approach as proposed in \cite{endreport.pdf} would be to interrupt the evaluation of a configuration as soon as it is clear that the performance is significantly worse than the best known configuration. This is way more difficult to implement, as it would require the ability to interrupt the evaluation of a configuration at any point in time. Especially in a MPI environment with multiple nodes, aborting and resetting the simulation to a consistent state would require a lot of synchronization and communication work.
 \end{itemize}
 
-% Include a figure showing early stopping impact
-\begin{figure}[!t]
-    \centering
-    % \includegraphics[width=3in]{early-stopping-impact}
-    \caption{Impact of Early Stopping on Tuning Overhead and Performance}
-    \label{fig_early_stopping}
-\end{figure}
+Both mentioned approaches require a user defined threshold for the maximum allowed slowdown of a configuration before it should be stopped. This threshold will be determined empirically in \autoref{sec:optimal_threshold}.
 
-\subsubsection{Algorithm}
-The early stopping decision process follows this procedure:
+To get a first impression of the potential benefits of an early stopping mechanism, we implemented the first approach in the AutoPas framework. The changes to the existing codebase are minimal and the early stopping mechanism can be implemented using existing functionality. \autoref{alg_early_stopping} shows the implementation of the early stopping mechanism in the AutoPas framework.
+
+\newpage
+
+\subsection{Implementation}
+The early stopping mechanism is triggered by the new \texttt{CheckEarlyStopping} function, which is called after the performance of a configuration has been measured. The function compares the performance of the current configuration to the best known performance encountered in the current tuning phase. If the performance of the current configuration is significantly worse than the best known performance, the \texttt{abort} flag is set to \texttt{true}. The existing \texttt{GetNextConfiguration} function is modified slightky to trigger a re-tuning of the configuration if the \texttt{abort} flag is set. The \texttt{abort} flag is reset during re-tuning.
+
 
 
 \begin{algorithm}[H]
-    \caption{Early Stopping in AutoPas}
+    \small
+    \caption{Early Stopping Algorithm in AutoPas}
+    \label{alg_early_stopping}
     \begin{algorithmic}[1]
-        \State{Initialize $bestPerformance \gets 0$}
-        \State{Initialize $confidenceThreshold \gets initialValue$}
-        \ForAll{$configuration \in searchSpace$}
-        \State{$performance \gets evaluatePartial(configuration)$}
-        \If{$performance < bestPerformance \times threshold$}
-        \State{$skipRemainingEvaluation(configuration)$}
-        \State{$updateStatistics(configuration, performance)$}
-        \Else
-        \State{$completePerformance \gets evaluateFull(configuration)$}
-        \State{$updateBestPerformance(completePerformance)$}
-        \State{$adjustThreshold(completePerformance)$}
+        \Procedure{CheckEarlyStopping}{performance}
+        \State $fastestTime \gets \min(fastestTime, performance)$
+        \State $slowdownFactor \gets \frac{performance}{fastestTime}$
+        \If{$slowdownFactor > maxAllowedSlowdown$}
+        \State $abort \gets true$
         \EndIf
-        \EndFor
+        \EndProcedure
+
+        \vspace{0.5em}
+
+        \Procedure{GetNextConfiguration}{}
+        \If{not $inTuningPhase$}
+        \State \Return ($currentConfig, false)$
+            \ElsIf{$numSamples$ $<$ $maxSamples$ \redbox{\textbf{and} not $abort$}}
+            \State \Return $(currentConfig, true)$
+            \Else
+            \State $stillTuning \gets \Call{tuneConfiguration}{~}$
+            \State \Return $(newConfig, stillTuning)$
+        \EndIf
+        \EndProcedure
     \end{algorithmic}
+
 \end{algorithm}
+
+
+
+\subsection{Evaluation}
+\label{sec:optimal_threshold}
+
+This section evaluates the performance of the early stopping mechanism described in \autoref{alg_early_stopping}. The performance of the early stopping mechanism is evaluated for different values of the maximum allowed slowdown factor, in order to determine the optimal threshold for the early stopping mechanism.
+
+All benchmarks are performed on the CoolMUC2 supercomputer \todo{reference} and are repeated 3 times to account for statistical variance.
+
+\subsubsection{Exploding Liquid Simulation}
+
+The first benchmark is performed with the \textit{Exploding Liquid} scenario present in the \texttt{md-flexible} framework. The simulation consists of 1764 initially close-packed particles that are simulated with a Lennard-Jones potential. During the simulation, the particles rapidly expand outwards and eventually hitting the simulation boundaries. The simulation is run with a single thread on a single node of the CoolMUC2 supercomputer.
+
+\begin{figure}[H]
+    \centering
+
+    \includegraphics[width=\columnwidth]{../data/explodingLiquid/analytics/total_time_average.png}
+
+    \caption{Total Simulation Time for Exploding Liquid Simulation with Early Stopping divided in tuning and simulation phases. The total simulation time is minimal at a maximum allowed slowdown factor of $\approx5$.}
+\end{figure}
+
 
 \subsubsection{Trade-offs and Considerations}
 While early stopping provides significant benefits, several factors require careful consideration:
@@ -199,7 +231,7 @@ While early stopping provides significant benefits, several factors require care
 
 Early stopping represents a crucial optimization in AutoPas's tuning strategy, effectively addressing the overhead challenges inherent in auto-tuning systems while maintaining robust performance optimization capabilities.
 
-
+\newpage
 
 \section{Analysis and Discussion}
 
@@ -280,6 +312,7 @@ Future research directions include:
 
 
 
+\newpage
 \newpage
 \tableofcontents
 

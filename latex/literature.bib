@@ -1,8 +1,59 @@
 @article{Gratl2019AutoPasAF,
-  title={AutoPas: Auto-Tuning for Particle Simulations},
-  author={Fabio Alexander Gratl and Steffen Seckler and Nikola Tchipev and Hans‐Joachim Bungartz and Philipp Neumann},
-  journal={2019 IEEE International Parallel and Distributed Processing Symposium Workshops (IPDPSW)},
-  year={2019},
-  pages={748-757},
-  url={https://api.semanticscholar.org/CorpusID:108345420}
+  title   = {AutoPas: Auto-Tuning for Particle Simulations},
+  author  = {Fabio Alexander Gratl and Steffen Seckler and Nikola Tchipev and Hans‐Joachim Bungartz and Philipp Neumann},
+  journal = {2019 IEEE International Parallel and Distributed Processing Symposium Workshops (IPDPSW)},
+  year    = {2019},
+  pages   = {748-757},
+  url     = {https://api.semanticscholar.org/CorpusID:108345420}
+}
+
+
+@mastersthesis{endreport.pdf,
+  type={Project Report},
+  author   = {Humig, Tobias},
+  title    = {Project Report: Exploring Performance Modeling in AutoPas},
+  year     = {2023},
+  school   = {Technical University of Munich},
+  month    = {Oct},
+  adress   = {},
+  pages    = {},
+  language = {en},
+  abstract = {The particle simulation library AutoPas implements many algorithms with vastly different performance characteristics to solve the pairwise short-range particle interactions in molecular dynamics simulations. During the simulation, it uses black-box optimization techniques to automatically select the fastest algorithm for the current state. While they are able to find good algorithms eventually, they often try highly unsuitable ones at the start due to lack of initial per- formance information. As some algorithms perform orders of magnitude worse than the optimum for a given simulation state, this has a significant negative impact on the time to solution.
+              In this project, we gather knowledge about the performance characteristics of the algorithms through theoretical modeling, profiling, and benchmarking. We make the results available through a new white-box optimization strategy that is able to apply any domain-specific knowledge during optimization. It removes those algorithms from the candidate list that likely perform worst in the current simulation state. In our tests, removing the five percent slowest algorithms reduced the tuning time by up to 80 percent while still finding the best algorithm. Furthermore, we give insights and recommendations what can be done to potentially improve the performance further.
+              },
+  keywords = {AutoPas},
+  note     = {},
+  url      = {}
+}
+
+@misc{autopas_issue673,
+  author       = {HobbyProgrammer},
+  title        = {Skip (or even timeout) extremely long running iterations of configurations during tuning},
+  year         = {2022},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/AutoPas/AutoPas/issues/673}},
+  note         = {Accessed: 2024-11-06}
+}
+
+
+@mastersthesis{Manuel_Lerchner_Thesis.pdf,
+  type={Bachelor's Thesis},
+  author   = {Lerchner, Manuel},
+  title    = {Exploring Fuzzy Tuning Technique for Molecular Dynamics Simulations in AutoPas},
+  year     = {2024},
+  school   = {Technical University of Munich},
+  month    = {Aug},
+  adress   = {},
+  pages    = {},
+  language = {en},
+  abstract = {AutoPas is a high-performance, auto-tuned particle simulation library for many-body systems, capable of dynamically switching between algorithms and data structures to guarantee optimal performance throughout the simulation.
+              This thesis introduces a novel fuzzy logic-based tuning strategy for AutoPas, allowing users to guide the tuning process by specifying custom Fuzzy Systems, which can be used to efficiently prune the search space of possible parameter configurations. Efficient tuning strategies are crucial, as they allow for discarding poor parameter configurations without evaluating them, thus reducing tuning time and improving overall library performance.
+              We demonstrate that a data-driven approach can automatically generate Fuzzy Systems that significantly outperform existing tuning strategies on specific benchmarks, resulting in speedups of up to 1.96x compared to the FullSearch Strategy on scenarios included in the training data and up to 1.35x on scenarios not directly included.
+              The Fuzzy Tuning Strategy can drastically reduce the number of evaluated configurations during tuning phases while achieving comparable tuning results, making it a promising alternative to the existing tuning strategies.
+              
+              },
+  keywords = {AutoPas; Auto-tuning; Fuzzy Logic;},
+  note     = {},
+  url      = {}
 }
