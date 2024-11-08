@@ -1,13 +1,3 @@
-@article{Gratl2019AutoPasAF,
-  title   = {AutoPas: Auto-Tuning for Particle Simulations},
-  author  = {Fabio Alexander Gratl and Steffen Seckler and Nikola Tchipev and Hans‐Joachim Bungartz and Philipp Neumann},
-  journal = {2019 IEEE International Parallel and Distributed Processing Symposium Workshops (IPDPSW)},
-  year    = {2019},
-  pages   = {748-757},
-  url     = {https://api.semanticscholar.org/CorpusID:108345420}
-}
-
-
 @mastersthesis{endreport.pdf,
   type={Project Report},
   author   = {Humig, Tobias},
@@ -57,3 +47,27 @@
   note     = {},
   url      = {}
 }
+
+@phdthesis{Tchipev2020,
+	author = {Tchipev, Nikola Plamenov},
+	title = {Algorithmic and Implementational Optimizations of Molecular Dynamics Simulations for Process Engineering},
+	year = {2020},
+	school = {Technische Universität München},
+	pages = {189},
+	language = {en},
+	abstract = {The focus of this work lies on implementational improvements and, in particular, node-level performance optimization of the simulation software ls1-mardyn. Through data structure improvements, SIMD vectorization and, especially, OpenMP parallelization, the world’s first simulation of 2*10<sup>13</sup> molecules at over 1 PFLOP/sec was enabled. To allow for long-range interactions, the Fast Multipole Method was introduced to ls1-mardyn. The algorithm was optimized for sequential, shared-memory, and distributed-memory execution on up to 32,768 MPI processes.},
+	keywords = {molecular dynamics, node-level performance, OpenMP, Fast Multipole Method},
+	note = {},
+	url = {https://mediatum.ub.tum.de/1524715},
+}
+
+@INPROCEEDINGS{Gratl2019AutoPas,
+  author={Gratl, Fabio Alexander and Seckler, Steffen and Tchipev, Nikola and Bungartz, Hans-Joachim and Neumann, Philipp},
+  booktitle={2019 IEEE International Parallel and Distributed Processing Symposium Workshops (IPDPSW)}, 
+  title={AutoPas: Auto-Tuning for Particle Simulations}, 
+  year={2019},
+  volume={},
+  number={},
+  pages={748-757},
+  keywords={Force;Heuristic algorithms;Computational modeling;Dynamics;Optimization;Software algorithms;Adaptation models;HPC;Molecular Dynamics;Auto-Tuning;Automatic Algorithm Selection;Dynamic Tuning},
+  doi={10.1109/IPDPSW.2019.00125}}

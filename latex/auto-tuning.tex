@@ -78,36 +78,16 @@ In contrast, dynamic optimizations adjust parameters based on the current simula
 In particular, we will focus on the auto-tuning capabilities of AutoPas, a modern MD framework that focuses on dynamic optimization techniques to achieve high performance in complex and possibly changing simulation scenarios. We will compare AutoPas's auto-tuning capabilities with other prominent MD engines, such as GROMACS and LAMMPS, to evaluate their effectiveness in various simulation scenarios. We will also investigate a possible improvement to the auto-tuning capabilities of AutoPas by introducing an early stopping mechanism to reduce the overhead of parameter space exploration.
 
 
-\section{State of the Art in MD Simulations}
-
-
-\subsection{GROMACS}
-
-\subsubsection{Static Optimization Techniques}
-
-
-\subsubsection{Dynamic Optimization Strategies}
-
-
-
-
-\subsection{LAMMPS}
-
-\subsubsection{Static Optimization Techniques}
-
-
-\subsubsection{Dynamic Optimization Strategies}
-
-
-
-\subsection*{Limitations of those Approaches}
-
-As mentioned earlier, both GROMACS and LAMMPS focus primarily on static optimization. While these techniques are heavily optimized, both engines are not capable of performing datastructure and algorithm changes at runtime. This limitation can lead to suboptimal performance in situations where the chosen implementation is not optimal. Those situations can also arise during the simulation, when the simulation state changes such that other datastructures or algorithms would be more efficient.
-
-
 \section{AutoPas Auto-Tuning Framework}
 \subsection{System Architecture}
-The AutoPas framework implements a sophisticated auto-tuning system based on several key components:
+
+AutoPas was developed on the basis of creating an efficient particle simulation enginge applicable to a wide range of applications \cite{Tchipev2020}. To support these various simulations, not just limited to molecular dynamics, AutoPas is build on a flexible software architecture that allows for different algorithms and data structures (called configurations) to be used (mostly) interchangeably in the underlying simulation engine.
+
+Another benefit of this modular approach is presented with the ever growing configuration library of AutoPas. As the library is constantly updated and new implementations targeting specific hardware or simulation scenarios are added,
+it is possible to constantly evaluate the feasibility of older implementations on new hardware \cite{Tchipev2020}.
+
+The task of selecting the configuration to actually use in a simulation is handled by the AutoPas auto-tuning framework. The auto-tuning framework periodically initiates so called \textit{tuning-phases} in which it measures and evaluates promising\footnote{Promising configurations are suggested by so called TuningStragies} configurations in order to determine the best configuration for the current simulation state \cite{Gratl2019AutoPas}. The winning configuration is then used until the next tuning phase is initiated.
+
 
 \begin{itemize}
     \item Container concepts for particle management
@@ -247,6 +227,14 @@ It is howerver noteworthy that the early stopping mechanism never caused a signi
 
 We conclude that the (naive) early stopping mechanism is a valuable addition to the AutoPas framework, as it can reduce the total simulation time significantly without causing any significant slowdowns.
 
+\subsection{Future Work}
+
+As the current implementation is only capable of stopping further samples of a configuration, the next step would be to extend the early stopping mechanism to dynamically blacklist certain implementations.
+
+A crude way to implement this would be to create a set of parameters most influential to the performance of the simulation (for example: \{\textit{Particle Container}, \textit{Data Layout}\}) and blacklist configurations that use a certain values if there is enough evidence that a configuration with those values is not a good choice for the current simulation scenario (potentialy if more than $X$\% of samples using certain values are stopped early).
+
+The parameter \textit{Particle Container} should be included in the set of parameters to blacklist, as it is known to be highly influential to the performance of the simulation \cite{Gratl2019AutoPas}.
+
 
 \subsection{Feature Comparison of MD Engines}
 
@@ -291,6 +279,34 @@ Even though AutoPas is designed to perform periodic auto-tuning, it often suffic
 Simulating an inhomogeneous scenario can sometimes benefit from re-tuning the configuration after a number of simulation steps, especially when using a MPI environment with multiple nodes. Inhomogeneous scenarios can cause the load to be distributed unevenly both across the nodes and across time steps, further increasing the potential benefits of periodically re-tuning the configuration on each node.
 
 The currently provided example runs from \texttt{md-flexible} are not sufficient to demonstrate the benefits of periodic re-tuning \todo{cite data from ba}. More complex scenarios, most likely involving multiple nodes and a high number of particles, are required to demonstrate the benefits of periodic re-tuning.
+
+
+\section{State of the Art in MD Simulations}
+
+
+\subsection{GROMACS}
+
+\subsubsection{Static Optimization Techniques}
+
+
+\subsubsection{Dynamic Optimization Strategies}
+
+
+
+
+\subsection{LAMMPS}
+
+\subsubsection{Static Optimization Techniques}
+
+
+\subsubsection{Dynamic Optimization Strategies}
+
+
+
+\subsection*{Limitations of those Approaches}
+
+As mentioned earlier, both GROMACS and LAMMPS focus primarily on static optimization. While these techniques are heavily optimized, both engines are not capable of performing datastructure and algorithm changes at runtime. This limitation can lead to suboptimal performance in situations where the chosen implementation is not optimal. Those situations can also arise during the simulation, when the simulation state changes such that other datastructures or algorithms would be more efficient.
+
 
 
 
