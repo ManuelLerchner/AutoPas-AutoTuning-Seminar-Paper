@@ -81,27 +81,42 @@ In particular, we will focus on the auto-tuning capabilities of AutoPas, a moder
 \section{AutoPas Auto-Tuning Framework}
 \subsection{System Architecture}
 
-AutoPas was developed on the basis of creating an efficient particle simulation enginge applicable to a wide range of applications \cite{Tchipev2020}. To support these various simulations, not just limited to molecular dynamics, AutoPas is build on a flexible software architecture that allows for different algorithms and data structures (called configurations) to be used (mostly) interchangeably in the underlying simulation engine.
+AutoPas was developed on the basis of creating an efficient particle / N-Body simulation enginge applicable to a wide range of applications \cite{Tchipev2020}. To support these various simulations, not just limited to molecular dynamics, AutoPas is build on a modular software architecture that allows for different algorithms and data structures to be used (mostly) interchangeably in the underlying simulation engine.
+
+All different algorithmic implementations for solving N-Body problems are part of the so called \textit{Algorithm Library} of AutoPas. The \textit{Algorithm Library} contains different implementations for certain key aspects of the simulation, such as neighbor identification, traversal patterns, and memory layouts.
+
+Together they form a so called \textit{Configuration} fully describing the internal implementation of the engine. Such a configuration is a 6-tuple consisting of implementations for: \textit{Container}, \textit{Traversal}, \textit{Load Estimator}, \textit{Data Layout}, \textit{Newton 3}, and \textit{Cell Size Factor}.
+
+An obvious benefit of this modular approach is the ability to easily swap out implementations for certain aspects of the simulation, without having to change the entire codebase. This allows for easy experimentation with different implementations and the ability to quickly adapt to new hardware or simulation scenarios.
 
 Another benefit of this modular approach is presented with the ever growing configuration library of AutoPas. As the library is constantly updated and new implementations targeting specific hardware or simulation scenarios are added,
 it is possible to constantly evaluate the feasibility of older implementations on new hardware \cite{Tchipev2020}.
 
-The task of selecting the configuration to actually use in a simulation is handled by the AutoPas auto-tuning framework. The auto-tuning framework periodically initiates so called \textit{tuning-phases} in which it measures and evaluates promising\footnote{Promising configurations are suggested by so called TuningStragies} configurations in order to determine the best configuration for the current simulation state \cite{Gratl2019AutoPas}. The winning configuration is then used until the next tuning phase is initiated.
 
-
-\begin{itemize}
-    \item Container concepts for particle management
-    \item Flexible traversal options
-    \item Dynamic parameter space exploration
-\end{itemize}
-
-% Include a figure showing the architecture
-\begin{figure}[!t]
+\begin{figure}[h]
     \centering
-    % \includegraphics[width=2.5in]{autopas-architecture}
-    \caption{AutoPas System Architecture}
+    \includegraphics[width=2in]{figures/AutoPasLibraryStructure.png}
+    \caption{AutoPas Library Structure \cite{Newcome2023Poster}}
     \label{fig_architecture}
 \end{figure}
+
+Manually selecting the best implementations for each tunable parameter is a daunting task, and would require extensive domain knowledge difficult to acquire, and maintain under the constantly changing software and hardware landscape. To address this issue, AutoPas performs automated algorithm selection to maximize certain performance metrics, such as simulation speed or energy efficiency \cite{Gratl2022AutoPas}. The auto-tuning framework of AutoPas periodically initiates so called \textit{tuning-phases} in which it measures and evaluates promising\footnote{Promising configurations are suggested by so called TuningStragies} configurations in order to determine the best configuration for the current simulation state \cite{Gratl2019AutoPas}. The winning configuration is then used until the next tuning phase is initiated.
+
+The key to efficient tuning phases is the ability to efficiently determine promising configurations. Just using the naive approach of evaluating all possible configurations turns out to be infeasible in practice, as many of the naively evaluated configurations turn out to be orders of magnitude slower than the best known configuration, thus causing a drastic increasing of the total simulation time \cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}.
+As AutoPas is developed further, and new implementations are added to the algorithm portfolio, the number of possible configurations will steadily increase, further exacerbating the problem of naively evaluating all configurations.
+
+AutoPas attempts to mitigate this problem by using so called \textit{TuningStrategies} which prune the search space of possible configurations based on certain criteria \cite{Gratl2019AutoPas}. A tuning strategy is tasked with the difficult job pruning enough configurations to make the tuning phase feasible, but not too many, as to not miss the optimal configuration. Tuning strategies need to balance the trade-off between potentially finding a better configuration and the cost of potentially encountering worse configurations during exploration \cite{Newcome2023Poster}.
+
+
+The following section will provide an overview of currently implemented TuningStrategies in AutoPas.
+
+
+\subsection{Tuning Strategies}
+
+\begin{enumerate}
+    \item a
+\end{enumerate}
+
 
 \subsection{Auto-Tuning Implementation}
 The auto-tuning mechanism in AutoPas operates through:
