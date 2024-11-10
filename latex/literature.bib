@@ -113,3 +113,48 @@
   note         = {},
   url          = {}
 }
+
+
+@mastersthesis{Gärtner_KokkosInAutoPas.pdf,
+  author   = {Gärtner, Ludwig},
+  title    = {Integrating Kokkos into AutoPas for hardware agnostic particle simulations},
+  year     = {2022},
+  school   = {Technical University of Munich},
+  month    = {Feb},
+  adress   = {},
+  pages    = {},
+  language = {en},
+  abstract = {AutoPas is an auto tuner for N-body simulations. Kokkos is a library that offers hardware independency through abstractions. The goal of this thesis was, an integration of Kokkos into AutoPas to improve performance portability.
+              This integration for now is limited to the KokkosLinkedCells container, which uses a central particle storage and an index based metadatastructure to link particles to cells in the simulation domain.
+              However, the implementation for this thesis was not finished to a point where it could be run on systems other than conventional multi core systems. Instead, the performance of the new KokkosLinkedCells container is compared to that of the regular LinkedCells container to determine the overhead that is introduced by this additional layer of abstraction. Overall, both containers perform very similarly in scenarios where work is evenly distributed among all threads, but the absence of algorithmic load balancing or dynamic scheduling harms the performance of the KokkosLinkedCells container in scenarios where particles are focused in one part of the simulation domain.},
+  keywords = {AutoPas;Kokkos},
+  note     = {},
+  url      = {}
+}
+
+@article{CARTEREDWARDS20143202,
+  title    = {Kokkos: Enabling manycore performance portability through polymorphic memory access patterns},
+  journal  = {Journal of Parallel and Distributed Computing},
+  volume   = {74},
+  number   = {12},
+  pages    = {3202-3216},
+  year     = {2014},
+  note     = {Domain-Specific Languages and High-Level Frameworks for High-Performance Computing},
+  issn     = {0743-7315},
+  doi      = {https://doi.org/10.1016/j.jpdc.2014.07.003},
+  url      = {https://www.sciencedirect.com/science/article/pii/S0743731514001257},
+  author   = {H. {Carter Edwards} and Christian R. Trott and Daniel Sunderland},
+  keywords = {Parallel computing, Thread parallelism, Manycore, GPU, Performance portability, Multidimensional array, Mini-application},
+  abstract = {The manycore revolution can be characterized by increasing thread counts, decreasing memory per thread, and diversity of continually evolving manycore architectures. High performance computing (HPC) applications and libraries must exploit increasingly finer levels of parallelism within their codes to sustain scalability on these devices. A major obstacle to performance portability is the diverse and conflicting set of constraints on memory access patterns across devices. Contemporary portable programming models address manycore parallelism (e.g., OpenMP, OpenACC, OpenCL) but fail to address memory access patterns. The Kokkos C++ library enables applications and domain libraries to achieve performance portability on diverse manycore architectures by unifying abstractions for both fine-grain data parallelism and memory access patterns. In this paper we describe Kokkos’ abstractions, summarize its application programmer interface (API), present performance results for unit-test kernels and mini-applications, and outline an incremental strategy for migrating legacy C++ codes to Kokkos. The Kokkos library is under active research and development to incorporate capabilities from new generations of manycore architectures, and to address a growing list of applications and domain libraries.}
+}
+
+
+@article{lammps_kokkos,
+  title         = {Speeding up LAMMPS with Kokkos},
+  journal       = {LAMMPS Documentation},
+  year          = {2024},
+  url           = {https://docs.lammps.org/Speed_kokkos.html},
+  urlaccessdate = {2024-11-10},
+  author        = {LAMMPS},
+  keywords      = {LAMMPS, Kokkos, Performance}
+}

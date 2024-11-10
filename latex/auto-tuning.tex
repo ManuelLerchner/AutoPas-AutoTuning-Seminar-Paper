@@ -78,10 +78,11 @@ In contrast, dynamic optimizations adjust parameters based on the current simula
 In particular, we will focus on the auto-tuning capabilities of AutoPas, a modern MD framework that focuses on dynamic optimization techniques to achieve high performance in complex and possibly changing simulation scenarios. We will compare AutoPas's auto-tuning capabilities with other prominent MD engines, such as GROMACS and LAMMPS, to evaluate their effectiveness in various simulation scenarios. We will also investigate a possible improvement to the auto-tuning capabilities of AutoPas by introducing an early stopping mechanism to reduce the overhead of parameter space exploration.
 
 
-\section{AutoPas Auto-Tuning Framework}
-\subsection{System Architecture}
+\section{AutoPas}
 
-AutoPas was developed on the basis of creating an efficient particle / N-Body simulation enginge applicable to a wide range of applications \cite{Tchipev2020}. To support these various simulations, not just limited to molecular dynamics, AutoPas is build on a modular software architecture that allows for different algorithms and data structures to be used (mostly) interchangeably in the underlying simulation engine.
+AutoPas was developed on the basis of creating an efficient particle / N-Body simulation enginge applicable to a wide range of applications \cite{Tchipev2020}. To support these various simulations, not just limited to molecular dynamics, AutoPas is build on a modular software architecture that allows for different algorithms and data structures to be used (mostly) interchangeably in the underlying simulation engine. AutoPas acts as a middleware between the simulation code provided by the user and various implementations of algorithms and data structures, which are chosen dynamically based on performance criteria.
+
+\subsection{Algorithm Library}
 
 All different algorithmic implementations for solving N-Body problems are part of the so called \textit{Algorithm Library} of AutoPas. The \textit{Algorithm Library} contains different implementations for certain key aspects of the simulation, such as neighbor identification, traversal patterns, and memory layouts.
 
@@ -89,8 +90,8 @@ Together they form a so called \textit{Configuration} fully describing the inter
 
 An obvious benefit of this modular approach is the ability to easily swap out implementations for certain aspects of the simulation, without having to change the entire codebase. This allows for easy experimentation with different implementations and the ability to quickly adapt to new hardware or simulation scenarios.
 
-Another benefit of this modular approach is presented with the ever growing configuration library of AutoPas. As the library is constantly updated and new implementations targeting specific hardware or simulation scenarios are added,
-it is possible to constantly evaluate the feasibility of older implementations on new hardware \cite{Tchipev2020}.
+Another benefit of this modular approach is presented with the ever growing configuration library of AutoPas. As the library is constantly updated and new implementations targeting specific hardware or simulation scenarios are added, it is possible to easily test the feasibility of older implementations
+under new hardware \cite{Tchipev2020}.
 
 
 \begin{figure}[h]
@@ -100,6 +101,8 @@ it is possible to constantly evaluate the feasibility of older implementations o
     \label{fig_architecture}
 \end{figure}
 
+\subsection{Auto-Tuning Framework}
+
 Manually selecting the best implementations for each tunable parameter is a daunting task, and would require extensive domain knowledge difficult to acquire, and maintain under the constantly changing software and hardware landscape. To address this issue, AutoPas performs automated algorithm selection to maximize certain performance metrics, such as simulation speed or energy efficiency \cite{Gratl2022AutoPas}. The auto-tuning framework of AutoPas periodically initiates so called \textit{tuning-phases} in which it measures and evaluates promising\footnote{Promising configurations are suggested by so called TuningStragies} configurations in order to determine the best configuration for the current simulation state \cite{Gratl2019AutoPas}. The winning configuration is then used until the next tuning phase is initiated.
 
 The key to efficient tuning phases is the ability to efficiently determine promising configurations. Just using the naive approach of evaluating all possible configurations turns out to be infeasible in practice, as many of the naively evaluated configurations turn out to be orders of magnitude slower than the best known configuration, thus causing a drastic increasing of the total simulation time \cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}.
@@ -108,34 +111,18 @@ As AutoPas is developed further, and new implementations are added to the algori
 AutoPas attempts to mitigate this problem by using so called \textit{TuningStrategies} which prune the search space of possible configurations based on certain criteria \cite{Gratl2019AutoPas}. A tuning strategy is tasked with the difficult job pruning enough configurations to make the tuning phase feasible, but not too many, as to not miss the optimal configuration. Tuning strategies need to balance the trade-off between potentially finding a better configuration and the cost of potentially encountering worse configurations during exploration \cite{Newcome2023Poster}.
 
 
-The following section will provide an overview of currently implemented TuningStrategies in AutoPas.
 
+\subsection{Static Optimization Techniques}
 
-\subsection{Tuning Strategies}
+Appart from the static optimization already performed by modern compilers, AutoPas is capable of performing basic tuning at compile time. As AutoPas hower primarily aims at dynamic optimization, the static optimization capabilities are limited to a set of compile-time flags that can be used to statically enable or disable certain features of the simulation engine, such as SIMD instructions, MPI support, or Auto-Vectorization \cite{Gratl2019AutoPas}.
 
-\begin{enumerate}
-    \item a
-\end{enumerate}
+\subsection{Kokkos Integration}
 
+There are however attemps to integrate more advanced static optimization techniques into the AutoPas framework. One such attempt is the integration of the Kokkos library into AutoPas aiming to provide performance portability across different hardware platforms, and be able to run existing algorithms on GPGPUs \cite{Gärtner_KokkosInAutoPas.pdf}. 
 
-\subsection{Auto-Tuning Implementation}
-The auto-tuning mechanism in AutoPas operates through:
+Kokkos is a performance-portable parallel programming model supporting diverse high-performance computing environments \cite{CARTEREDWARDS20143202}. Kokkos provides high-level C++ abstractions for parallel execution and memory management, enabling developers to write performance-portable code that can be compiled for different hardware architectures, including GPUs, Intel Xeon Phis, or many-core CPUs \cite{lammps_kokkos}.
 
-\begin{enumerate}
-    \item Runtime performance measurement
-    \item Search space exploration
-    \item Adaptive decision-making
-\end{enumerate}
-
-\subsection{Analysis of Tuning Strategies}
-
-AutoPas employs several auto-tuning strategies:
-
-\begin{itemize}
-    \item Static tuning for initial parameter selection
-    \item Dynamic tuning for runtime adaptation
-    \item Performance profiling for optimization
-\end{itemize}
+The integration is still in an experimental phase and not yet capable of targeting systems other than conventional multi-core CPUs \cite{Gärtner_KokkosInAutoPas.pdf}. A full integration of Kokkos into AutoPas could provide a significant performance boost, especially as classical MD Simulation engines such as LAMMPS show benefits from using Kokkos, particularly on large simulations on GPUs \cite{lammps_kokkos}.
 
 \newpage
 \newpage
