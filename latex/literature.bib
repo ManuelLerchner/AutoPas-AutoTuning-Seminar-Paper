@@ -160,25 +160,39 @@
 }
 
 @misc{fursin2014collectivetuninginitiative,
-      title={Collective Tuning Initiative}, 
-      author={Grigori Fursin},
-      year={2014},
-      eprint={1407.3487},
-      archivePrefix={arXiv},
-      primaryClass={cs.DC},
-      url={https://arxiv.org/abs/1407.3487}, 
+  title         = {Collective Tuning Initiative},
+  author        = {Grigori Fursin},
+  year          = {2014},
+  eprint        = {1407.3487},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.DC},
+  url           = {https://arxiv.org/abs/1407.3487}
 }
 
 @article{SECKLER2021101296,
-title = {AutoPas in ls1 mardyn: Massively parallel particle simulations with node-level auto-tuning},
-journal = {Journal of Computational Science},
-volume = {50},
-pages = {101296},
-year = {2021},
-issn = {1877-7503},
-doi = {https://doi.org/10.1016/j.jocs.2020.101296},
-url = {https://www.sciencedirect.com/science/article/pii/S1877750320305901},
-author = {Steffen Seckler and Fabio Gratl and Matthias Heinen and Jadran Vrabec and Hans-Joachim Bungartz and Philipp Neumann},
-keywords = {AutoPas, ls1 mardyn, Molecular dynamics, Particle simulations, MPI, Auto-tuning},
-abstract = {Due to computational cost, simulation software is confronted with the need to always use optimal building blocks — data structures, solver algorithms, parallelization schemes, and so forth — in terms of efficiency, while it typically needs to support a variety of hardware architectures. AutoPas implements the computationally most expensive molecular dynamics (MD) steps (e.g., force calculation) and chooses on-the-fly, i.e., at run time, the optimal combination of the previously mentioned building blocks. We detail decisions made in AutoPas to enable the interplay with MPI-parallel simulations and, to our knowledge, showcase the first MPI-parallel MD simulations that use dynamic tuning. We discuss the benefits of this approach for three simulation scenarios from process engineering, in which we obtain performance improvements of up to 50%, compared to the baseline performance of the highly optimized ls1 mardyn software.}
+  title    = {AutoPas in ls1 mardyn: Massively parallel particle simulations with node-level auto-tuning},
+  journal  = {Journal of Computational Science},
+  volume   = {50},
+  pages    = {101296},
+  year     = {2021},
+  issn     = {1877-7503},
+  doi      = {https://doi.org/10.1016/j.jocs.2020.101296},
+  url      = {https://www.sciencedirect.com/science/article/pii/S1877750320305901},
+  author   = {Steffen Seckler and Fabio Gratl and Matthias Heinen and Jadran Vrabec and Hans-Joachim Bungartz and Philipp Neumann},
+  keywords = {AutoPas, ls1 mardyn, Molecular dynamics, Particle simulations, MPI, Auto-tuning},
+  abstract = {Due to computational cost, simulation software is confronted with the need to always use optimal building blocks — data structures, solver algorithms, parallelization schemes, and so forth — in terms of efficiency, while it typically needs to support a variety of hardware architectures. AutoPas implements the computationally most expensive molecular dynamics (MD) steps (e.g., force calculation) and chooses on-the-fly, i.e., at run time, the optimal combination of the previously mentioned building blocks. We detail decisions made in AutoPas to enable the interplay with MPI-parallel simulations and, to our knowledge, showcase the first MPI-parallel MD simulations that use dynamic tuning. We discuss the benefits of this approach for three simulation scenarios from process engineering, in which we obtain performance improvements of up to 50%, compared to the baseline performance of the highly optimized ls1 mardyn software.}
+}
+
+@article{NEWCOME2023115278,
+  title    = {Towards auto-tuning Multi-Site Molecular Dynamics simulations with AutoPas},
+  journal  = {Journal of Computational and Applied Mathematics},
+  volume   = {433},
+  pages    = {115278},
+  year     = {2023},
+  issn     = {0377-0427},
+  doi      = {https://doi.org/10.1016/j.cam.2023.115278},
+  url      = {https://www.sciencedirect.com/science/article/pii/S0377042723002224},
+  author   = {Samuel James Newcome and Fabio Alexander Gratl and Philipp Neumann and Hans-Joachim Bungartz},
+  keywords = {Molecular Dynamics, High performance computing, Auto-tuning, AutoPas, Multi-Site Molecular Dynamics},
+  abstract = {There exists an extensive literature of algorithms for short-range pairwise interactions in particle simulations, however, there is no single algorithm that performs the most optimally in every scenario, motivating the use of auto-tuning to select the optimal pairwise interaction algorithm. Previous efforts to auto-tune Molecular Dynamics have focused on Single-Site Molecular Dynamics, where the computational cost for the intermolecular force calculation is constant. Alternatively, for Multi-Site Molecular Dynamics, the cost of this calculation varies with the number of sites, which, as we show in this paper, can result in different optimal algorithms. Despite this further benefit for auto-tuning, it has yet to be applied to Multi-Site Molecules. In this paper, we introduce an implementation of Multi-Site Molecular Dynamics that is integrated with AutoPas. Using this implementation, we analyse how the relative performance between these algorithms varies as the number of sites varies, for both homogeneous and heterogeneous molecule distributions, and for two different hardware. Furthermore, we demonstrate the advantage of auto-tuning in the context of Multi-Site Molecular Dynamics using the node-level short-range particle simulation library, AutoPas.}
 }

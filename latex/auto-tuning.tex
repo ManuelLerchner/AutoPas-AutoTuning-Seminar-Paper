@@ -93,6 +93,24 @@ An obvious benefit of this modular approach is the ability to easily swap out im
 Another benefit of this modular approach is presented with the ever growing configuration library of AutoPas. As the library is constantly updated and new implementations targeting specific hardware or simulation scenarios are added, it is possible to easily test the feasibility of older implementations
 under new hardware \cite{Tchipev2020}.
 
+\subsubsection{Container}
+
+The \textit{Container} is responsible for storing the particles of the simulation such that relevant neighbor particles can be determinend efficiently. As AutoPas focuses on short-range interactions and uses a cutoff radius $r_c$, neighbor identification using just $O(N)$ distance calculations is possible \cite{Gratl2019AutoPas}. Such efficient neighbor identification are required for the simulation of large particle systems to be feasible.
+
+This section introduces the different containers available in the AutoPas framework, and discusses the benefits and drawbacks of each container type.
+
+\todo{Container Types}
+
+\subsubsection{Traversal}
+
+\textit{Traversals} are responsible for iterating over the particles in the simulation and calculating the interactions between them in a shared-memory environment \cite{NEWCOME2023115278}. The traversal pattern is a key aspect of the simulation engine, as it determines to which extent force calculations can be parallelized and wheter optimizations, such as Newton 3, can be applied without causing race conditions.
+
+This section introduces the different traversal patterns available in the AutoPas framework, and discusses the benefits and drawbacks of each traversal type.
+
+\todo{Traversal Types}
+
+
+
 
 \begin{figure}[h]
     \centering
