@@ -1,58 +1,27 @@
 {
     "latex-workshop.latex.recipes": [
         {
-            "name": "slides",
+            "name": "LateXcompilation",
             "tools": [
-                "pdflatex",
-                "bibtex",
-                "pdflatex",
-                "pdflatex"
-            ]
-        },
-        {
-            "name": "pdflatexdraft, bibtex, pdflatexdraft, pdflatex",
-            "tools": [
-                "pdflatexdraft",
-                "bibtex",
-                "pdflatexdraft",
-                "pdflatex"
+                "lualatex+bibtex"
             ]
         }
     ],
     "latex-workshop.latex.tools": [
         {
-            "name": "pdflatexdraft",
-            "command": "pdflatex",
+            "name": "lualatex+bibtex",
+            "command": "latexmk",
             "args": [
                 "-synctex=1",
-                "-draftmode",
                 "-interaction=nonstopmode",
-                "-shell-escape",
-                "-halt-on-error",
                 "-file-line-error",
                 "-lualatex",
+                "-bibtex",
+                "-outdir=%OUTDIR%",
                 "%DOC%"
-            ]
+            ],
+            "env": {}
         },
-        {
-            "name": "bibtex",
-            "command": "bibtex",
-            "args": [
-                "%DOCFILE%"
-            ]
-        },
-        {
-            "name": "pdflatex",
-            "command": "pdflatex",
-            "args": [
-                "-synctex=1",
-                "-interaction=nonstopmode",
-                "-shell-escape",
-                "-halt-on-error",
-                "-file-line-error",
-                "%DOC%"
-            ]
-        }
     ],
     "grammarly.selectors": [
         {

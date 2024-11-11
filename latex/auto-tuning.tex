@@ -114,18 +114,32 @@ AutoPas attempts to mitigate this problem by using so called \textit{TuningStrat
 
 \subsection{Static Optimization Techniques}
 
-Appart from the static optimization already performed by modern compilers, AutoPas is capable of performing basic tuning at compile time. As AutoPas hower primarily aims at dynamic optimization, the static optimization capabilities are limited to a set of compile-time flags that can be used to statically enable or disable certain features of the simulation engine, such as SIMD instructions, MPI support, or Auto-Vectorization \cite{Gratl2019AutoPas}.
+Static optimization techniques are primarily applied by compilers to generate efficient machine code for a given hardware architecture. As modern compilers are aimed at generating good average performance across a wide range of hardware platforms, default optimization settings are often not optimal for a specific hardware platform and application \cite{fursin2014collectivetuninginitiative}. To achieve optimal performance, some effort is required to tune the compiler settings to the specific hardware and application.
 
-\subsection{Kokkos Integration}
+Another way to improve the performance of the generated code are profile-guided optimizations. Profile-guided optimizations use prior performance data collected during a simulation run to optimize the generated code for the specific workload during the next compilation.
 
-There are however attemps to integrate more advanced static optimization techniques into the AutoPas framework. One such attempt is the integration of the Kokkos library into AutoPas aiming to provide performance portability across different hardware platforms, and be able to run existing algorithms on GPGPUs \cite{Gärtner_KokkosInAutoPas.pdf}. 
+Appart from the static optimization already performed by modern compilers, AutoPas is capable of performing basic tuning at compile time. As AutoPas hower primarily aims at dynamic optimization, the static optimization capabilities are limited to a set of compile-time flags that can be used to statically enable or disable certain features of the simulation engine, such as SIMD instructions, MPI support, or Auto-Vectorization \cite{Gratl2019AutoPas}. Those flags primarily aim at ensuring that the simulation engine can utilize the full potential of the hardware it is run on, but they are not used directly to tune the performance of the simulation engine.
+
+\subsubsection{Kokkos Integration}
+
+There are however attempts to expand the static optimization capabilities of AutoPas beyond just compile-time flags. One such attempt is the integration of the Kokkos library into AutoPas aiming to provide performance portability across different hardware platforms, and be able to run existing algorithms on GPGPUs \cite{Gärtner_KokkosInAutoPas.pdf}.
 
 Kokkos is a performance-portable parallel programming model supporting diverse high-performance computing environments \cite{CARTEREDWARDS20143202}. Kokkos provides high-level C++ abstractions for parallel execution and memory management, enabling developers to write performance-portable code that can be compiled for different hardware architectures, including GPUs, Intel Xeon Phis, or many-core CPUs \cite{lammps_kokkos}.
 
-The integration is still in an experimental phase and not yet capable of targeting systems other than conventional multi-core CPUs \cite{Gärtner_KokkosInAutoPas.pdf}. A full integration of Kokkos into AutoPas could provide a significant performance boost, especially as classical MD Simulation engines such as LAMMPS show benefits from using Kokkos, particularly on large simulations on GPUs \cite{lammps_kokkos}.
+The integration is still in an experimental phase and not yet capable of targeting systems other than conventional multi-core CPUs \cite{Gärtner_KokkosInAutoPas.pdf}.
+
+A full integration of Kokkos into AutoPas could be beneficial as classical MD Simulation engines such as LAMMPS have demonstrated performance benefits from using Kokkos, particularly on large simulations on GPUs \cite{lammps_kokkos}. Supporting various hardware platforms could further demonstrate the usefulness of the AutoPas framework, as the performance of the algorithm library is highly dependent on the underlying hardware \cite{SECKLER2021101296} and changes in the optimal configuration are expected.
+
+\section{Demonstration of Benefits of AutoTuning}
+
+Even though AutoPas is designed to perform periodic auto-tuning, it often sufficient to just perform a single tuning phase at the beginning of the simulation, as many scenarios tend to behave fairly stable over time.
+Simulating an inhomogeneous scenario can sometimes benefit from re-tuning the configuration after a number of simulation steps, especially when using a MPI environment with multiple nodes. Inhomogeneous scenarios can cause the load to be distributed unevenly both across the nodes and across time steps, further increasing the potential benefits of periodically re-tuning the configuration on each node.
+
+The currently provided example runs from \texttt{md-flexible} are not sufficient to demonstrate the benefits of periodic re-tuning \todo{cite data from ba}. More complex scenarios, most likely involving multiple nodes and a high number of particles, are required to demonstrate the benefits of periodic re-tuning.
 
 \newpage
 \newpage
+
 
 \section{Early Stopping Optimization}
 
@@ -138,11 +152,9 @@ All mentioned sources suggest that some form of \textit{early stopping} mechanis
     \item \textbf{Interrupting the Evaluation:} A more fine grained approach as proposed in \cite{endreport.pdf} would be to interrupt the evaluation of a configuration as soon as it is clear that the performance is significantly worse than the best known configuration. This is way more difficult to implement, as it would require the ability to interrupt the evaluation of a configuration at any point in time. Especially in a MPI environment with multiple nodes, aborting and resetting the simulation to a consistent state would require a lot of synchronization and communication work.
 \end{itemize}
 
-Both mentioned approaches require a user defined threshold for the maximum allowed slowdown of a configuration before it should be stopped. This threshold will be determined empirically in \autoref{sec:optimal_threshold}.
+Both mentioned approaches require a user defined threshold for the maximum allowed slowdown of a configuration before it should be stopped. This threshold will be determined empirically in \autoref{sec:evaluation}.
 
 To get a first impression of the potential benefits of an early stopping mechanism, we implemented the first approach in the AutoPas framework. The changes to the existing codebase are minimal and the early stopping mechanism can be implemented using existing functionality. \autoref{alg_early_stopping} shows the implementation of the early stopping mechanism in the AutoPas framework.
-
-\newpage
 
 \subsection{Implementation}
 The early stopping mechanism is triggered by the new \texttt{CheckEarlyStopping} function, which is called after the performance of a configuration has been measured. The function compares the performance of the current configuration to the best known performance encountered in the current tuning phase. If the performance of the current configuration is significantly worse than the best known performance, the \texttt{abort} flag is set to \texttt{true}. The existing \texttt{GetNextConfiguration} function is modified slightky to trigger a re-tuning of the configuration if the \texttt{abort} flag is set. The \texttt{abort} flag is reset during re-tuning.
@@ -181,7 +193,7 @@ The early stopping mechanism is triggered by the new \texttt{CheckEarlyStopping}
 
 
 \subsection{Evaluation}
-\label{sec:optimal_threshold}
+\label{sec:evaluation}
 
 This section evaluates the performance of the early stopping mechanism described in \autoref{alg_early_stopping}. The performance of the early stopping mechanism is evaluated for different values of the maximum allowed slowdown factor, in order to determine the optimal threshold for the early stopping mechanism.
 
@@ -201,23 +213,13 @@ The first benchmark is performed with the \textit{Exploding Liquid} scenario pre
 
 Compared to FullSearch without early stopping, the early stopping mechanism can reduce the total simulation time from \todo{X} to \todo{Y} seconds. This is a reduction of \todo{Z}\%.
 
-\subsubsection{Spinodal Decomposition Simulation}
-
-The second benchmark is performed with the \textit{Spinodal Decomposition} scenario present in the \texttt{md-flexible} framework. The simulation consists of 100.000 particles that are simulated with a Lennard-Jones potential. The simulation is run with 14 threads on a single node of the CoolMUC2 supercomputer.
-
-\todo{Add Spinodal Decomposition Benchmark Results}
-
-
-
-Compared to FullSearch without early stopping, the early stopping mechanism can reduce the total simulation time from \todo{X} to \todo{Y} seconds. This is a reduction of \todo{Z}\%.
-
 
 \subsubsection{Early Stopping combined with Tuning Strategies}
 
 \todo{todo}
 
 
-\section{Analysis and Discussion}
+\subsection{Analysis and Discussion}
 
 All evaluated benchmarks show that there exists just a slim range of optimal thresholds for the early stopping mechanism which actually reduce the total simulation time. This is expected, the two corner cases $maxAllowedSlowdown \to 1$ and $maxAllowedSlowdown \to \infty$ are expected to perform poorly. $maxAllowedSlowdown \to 1$ essentially results in tuning phases with just one sample per configuration, which is not enough to get a good estimate of the performance of a configuration and causes simulation phases with suboptimal configurations. On the other hand, $maxAllowedSlowdown \to \infty$ results in the early stopping mechanism never aborting a configuration, which is equivalent to always evaluating all samples of a configuration, even if the configuration is known to be suboptimal.
 
@@ -238,49 +240,8 @@ A crude way to implement this would be to create a set of parameters most influe
 The parameter \textit{Particle Container} should be included in the set of parameters to blacklist, as it is known to be highly influential to the performance of the simulation \cite{Gratl2019AutoPas}.
 
 
-\subsection{Feature Comparison of MD Engines}
-
-
-% Include a comparison table
-\begin{table}[H]
-    \caption{Feature Comparison of MD Engines}
-    \label{table_comparison}
-    \centering
-    \begin{tabular}{|l|c|c|c|}
-        \hline
-        \textbf{Feature}       & \textbf{AutoPas} & \textbf{GROMACS} & \textbf{LAMMPS} \\
-        \hline
-        Auto-tuning            & \checkmark       & Partial          & Partial         \\
-        \hline
-        GPU Support            & \checkmark       & \checkmark       & \checkmark      \\
-        \hline
-        Dynamic Load Balancing & \checkmark       & \checkmark       & \checkmark      \\
-        \hline
-    \end{tabular}
-\end{table}
-
-\subsection{Strengths and Limitations}
-Comparative analysis reveals:
-\begin{itemize}
-    \item Performance impact of different approaches
-    \item Overhead considerations
-    \item Scalability characteristics
-\end{itemize}
-
-\subsection{Use Case Scenarios}
-Different engines excel in various scenarios:
-\begin{itemize}
-    \item Large-scale simulations
-    \item GPU-accelerated computations
-    \item Memory-constrained environments
-\end{itemize}
-
-\subsection{Demonstration of Benefits of AutoTuning}
-
-Even though AutoPas is designed to perform periodic auto-tuning, it often sufficient to just perform a single tuning phase at the beginning of the simulation, as many scenarios tend to behave fairly stable over time.
-Simulating an inhomogeneous scenario can sometimes benefit from re-tuning the configuration after a number of simulation steps, especially when using a MPI environment with multiple nodes. Inhomogeneous scenarios can cause the load to be distributed unevenly both across the nodes and across time steps, further increasing the potential benefits of periodically re-tuning the configuration on each node.
-
-The currently provided example runs from \texttt{md-flexible} are not sufficient to demonstrate the benefits of periodic re-tuning \todo{cite data from ba}. More complex scenarios, most likely involving multiple nodes and a high number of particles, are required to demonstrate the benefits of periodic re-tuning.
+\newpage
+\newpage
 
 
 \section{State of the Art in MD Simulations}
@@ -305,6 +266,28 @@ The currently provided example runs from \texttt{md-flexible} are not sufficient
 
 
 
+\subsection{Feature Comparison of MD Engines}
+
+
+% Include a comparison table
+\begin{table}[H]
+    \caption{Feature Comparison of MD Engines}
+    \label{table_comparison}
+    \centering
+    \begin{tabular}{|l|c|c|c|}
+        \hline
+        \textbf{Feature}       & \textbf{AutoPas} & \textbf{GROMACS} & \textbf{LAMMPS} \\
+        \hline
+        Auto-tuning            & \checkmark       & Partial          & Partial         \\
+        \hline
+        GPU Support            & \checkmark       & \checkmark       & \checkmark      \\
+        \hline
+        Dynamic Load Balancing & \checkmark       & \checkmark       & \checkmark      \\
+        \hline
+    \end{tabular}
+\end{table}
+
+
 \subsection*{Limitations of those Approaches}
 
 As mentioned earlier, both GROMACS and LAMMPS focus primarily on static optimization. While these techniques are heavily optimized, both engines are not capable of performing datastructure and algorithm changes at runtime. This limitation can lead to suboptimal performance in situations where the chosen implementation is not optimal. Those situations can also arise during the simulation, when the simulation state changes such that other datastructures or algorithms would be more efficient.
@@ -313,6 +296,17 @@ As mentioned earlier, both GROMACS and LAMMPS focus primarily on static optimiza
 
 
 \subsection{Performance Comparison}
+
+
+Different engines excel in various scenarios:
+\begin{itemize}
+    \item Large-scale simulations
+    \item GPU-accelerated computations
+    \item Memory-constrained environments
+\end{itemize}
+
+
+
 \begin{itemize}
     \item AutoPas demonstrates superior performance in various scenarios.
     \item GROMACS and LAMMPS show competitive performance in specific use cases.
