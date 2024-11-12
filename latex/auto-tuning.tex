@@ -239,24 +239,22 @@ This section evaluates the performance of the early stopping mechanism described
 
 All benchmarks are performed on the CoolMUC2 supercomputer \todo{reference} and are repeated 3 times to account for statistical variance.
 
-\subsubsection{Exploding Liquid Simulation}
+\subsubsection{Exploding Liquid Simulation [Predictive Tuning]}
 
 The first benchmark is performed with the \textit{Exploding Liquid} scenario present in the \texttt{md-flexible} framework. The simulation consists of 1764 initially close-packed particles that are simulated with a Lennard-Jones potential. During the simulation, the particles rapidly expand outwards and eventually hitting the simulation boundaries. The simulation is run with a single thread on a single node of the CoolMUC2 supercomputer.
 
 \begin{figure}[H]
     \centering
 
-    \includegraphics[width=\columnwidth]{../data/explodingLiquid/analytics/total_time_average.png}
+    \includegraphics[width=\columnwidth]{../data/explodingLiquid/cluster/predictiveTuning/analytics/total_time_average.png}
 
     \caption{Total Simulation Time for Exploding Liquid Simulation with Early Stopping divided in tuning and simulation phases. The total simulation time is minimal at a maximum allowed slowdown factor of $\approx5$.}
 \end{figure}
 
-Compared to FullSearch without early stopping, the early stopping mechanism can reduce the total simulation time from \todo{X} to \todo{Y} seconds. This is a reduction of \todo{Z}\%.
+Compared to Predictive Tuning without early stopping, the early stopping mechanism can reduce the total simulation time from 28.62 seconds to 23.23 seconds when using a maximum allowed slowdown factor of 5. This is a reduction of 18.9\% in the total simulation time. The optimal threshold for the early stopping mechanism is around 5 for the \textit{Exploding Liquid} scenario.
 
 
-\subsubsection{Early Stopping combined with Tuning Strategies}
-
-\todo{todo}
+\subsubsection{Exploding Liquid Simulation [Full Search]}
 
 
 \subsection{Analysis and Discussion}
@@ -373,7 +371,7 @@ Future research directions include:
 \cite{Gratl2019AutoPasAF}
 
 
-\bibliographystyle{plain}
+\bibliographystyle{IEEEtran}
 \bibliography{literature}
 
 
