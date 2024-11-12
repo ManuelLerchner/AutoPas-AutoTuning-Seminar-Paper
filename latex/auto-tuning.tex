@@ -4,9 +4,9 @@
 % Packages
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
+\usepackage[dvipsnames]{xcolor}
 \usepackage{graphicx}
 \usepackage{textcomp}
-\usepackage{xcolor}
 \usepackage{listings}
 \usepackage{subcaption}
 \usepackage{multirow}
@@ -80,7 +80,14 @@ In particular, we will focus on the auto-tuning capabilities of AutoPas, a moder
 
 \section{AutoPas}
 
-AutoPas was developed on the basis of creating an efficient particle / N-Body simulation enginge applicable to a wide range of applications \cite{Tchipev2020}. To support these various simulations, not just limited to molecular dynamics, AutoPas is build on a modular software architecture that allows for different algorithms and data structures to be used (mostly) interchangeably in the underlying simulation engine. AutoPas acts as a middleware between the simulation code provided by the user and various implementations of algorithms and data structures, which are chosen dynamically based on performance criteria.
+AutoPas was developed on the basis of creating an efficient particle / N-Body simulation enginge applicable to a wide range of applications \cite{Tchipev2020}. To support these various simulations, not just limited to molecular dynamics, AutoPas is build on a modular software architecture that allows for different algorithms and data structures to be used (mostly) interchangeably in the underlying simulation engine. AutoPas acts as a middleware between the simulation code provided by the user and various implementations of algorithms and data structures, which are chosen dynamically based on performance criteria by so called \textit{tuning strategies}. \autoref{fig_architecture} shows a high-level overview of the AutoPas library structure.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=2.2in]{figures/AutoPasLibraryStructure.png}
+    \caption{AutoPas Library Structure as depicted by \cite{Newcome2023Poster}}
+    \label{fig_architecture}
+\end{figure}
 
 \subsection{Algorithm Library}
 
@@ -93,31 +100,46 @@ An obvious benefit of this modular approach is the ability to easily swap out im
 Another benefit of this modular approach is presented with the ever growing configuration library of AutoPas. As the library is constantly updated and new implementations targeting specific hardware or simulation scenarios are added, it is possible to easily test the feasibility of older implementations
 under new hardware \cite{Tchipev2020}.
 
+
 \subsubsection{Container}
 
-The \textit{Container} is responsible for storing the particles of the simulation such that relevant neighbor particles can be determinend efficiently. As AutoPas focuses on short-range interactions and uses a cutoff radius $r_c$, neighbor identification using just $O(N)$ distance calculations is possible \cite{Gratl2019AutoPas}. Such efficient neighbor identification are required for the simulation of large particle systems to be feasible.
+The \textit{Container} is responsible for storing the particles of the simulation such that relevant neighbor particles can be determinend efficiently. As AutoPas focuses on short-range interactions and uses a cutoff radius $r_c$, neighbor identification using just $O(N)$ distance calculations is possible \cite{Gratl2019AutoPas}. Such efficient neighbor identification are required for the simulation of large particle systems to be feasible. \autoref{fig_containers} shows the three most important container types used in AutoPas.
 
-This section introduces the different containers available in the AutoPas framework, and discusses the benefits and drawbacks of each container type.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/containers.jpg}
+    \caption{Important Container Types as depicted by \cite{Gratl2022AutoPas}. The cut-off radius $\color{red} r_c$ is shown using a red circle.}
+    \label{fig_containers}
+\end{figure}
 
-\todo{Container Types}
+
+\begin{itemize}
+    \item The \textit{LinkedCells} container maintains a grid of cells with a length of ${\color{red} r_c} * \textit{cellSizeFactor}$, where each cell contains a list of particles. When calculating the forces between particles, only neighboring cells (depicted as blue cells) need to be considered. All other particles are guaranteed to be outside the cut-off radius and can be ignored. \\
+          LinkedCells typically come with a big overhead of useless distance calculations (shown by the many arrows in the figure), but are very cache friendly \cite{Gratl2022AutoPas}.
+
+    \item The \textit{VerletList} container use a second radius $r_v = {\color{red} r_c} + \Delta_s$ (yellow circle) and considers all particles within this radius as potential neighbors. By introducing this buffer region, it is also possible to only rebuilt the neighbor-list every $N$ simulation steps, as long as no particle can move from outside $rc+ \Delta_s$ to inside $r_c$ unnoticed \cite{NEWCOME2023115278}. \\
+          VerletLists can reduce the number of spurious distance calculations drastically, but cause far higher memory consumptions and are less cache friendly, reducing the vectorization potential \cite{Gratl2022AutoPas}.
+
+    \item The \textit{Verlet Cluster Lists} container improves on the VerletList container by grouping particles into clusters of size $M$ ($M=4$ in the figures). When calculating the forces between particles, all particles from overlapping clusters within the $r_v$ radius need to be considered.\\
+          Naturally this increases the number of spurious distance calculations again. However the number and size of the maintained lists can be reduced drastically. Furthermore $M$ can be chosen such that efficient vectorization is possible \cite{Gratl2022AutoPas}.
+
+\end{itemize}
+
 
 \subsubsection{Traversal}
 
-\textit{Traversals} are responsible for iterating over the particles in the simulation and calculating the interactions between them in a shared-memory environment \cite{NEWCOME2023115278}. The traversal pattern is a key aspect of the simulation engine, as it determines to which extent force calculations can be parallelized and wheter optimizations, such as Newton 3, can be applied without causing race conditions.
+\textit{Traversals} are responsible for iterating over the particles in the simulation and calculating the interactions between them in a shared-memory environment \cite{SECKLER2021101296}. The traversal pattern is a key aspect of the simulation engine, as it determines to which extent force calculations can be parallelized and wheter optimizations, such as Newton 3, can be applied.
+By using Newton's third law, the number of force calculations can be reduced by half, as the force between two particles is equal and opposite. Not all traversal patterns support Newton 3, as it could introduce race conditions.
 
-This section introduces the different traversal patterns available in the AutoPas framework, and discusses the benefits and drawbacks of each traversal type.
+
 
 \todo{Traversal Types}
 
 
+\subsubsection{Data Layout}
 
+The \textit{Data Layout} is responsible for how the particle data is stored in memory. The choice of data layout can have a significant impact on the performance of the simulation engine, as it determines the memory access patterns and the potential for vectorization. Possible choices are \textit{SoA} (Structure of Arrays) and \textit{AoS} (Array of Structures). \textit{SoA} is typically more cache friendly and allows for better vectorization, however it causes information about a single particle to be spread across multiple memory locations. \textit{AoS} on the other hand stores all information about a single particle together, but prohibits efficient vectorization as filling vector registers requires gathering data from multiple memory locations.
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=2in]{figures/AutoPasLibraryStructure.png}
-    \caption{AutoPas Library Structure \cite{Newcome2023Poster}}
-    \label{fig_architecture}
-\end{figure}
 
 \subsection{Auto-Tuning Framework}
 
