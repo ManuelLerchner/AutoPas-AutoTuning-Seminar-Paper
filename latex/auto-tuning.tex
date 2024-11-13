@@ -13,11 +13,14 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{algorithmicx}
-\usepackage{todonotes}
 \usepackage{url}
 \usepackage{caption}  
 \usepackage{tcolorbox}
 \usepackage{hyperref}
+\usepackage[T1]{fontenc}
+
+\setlength {\marginparwidth }{2cm}
+\usepackage{todonotes}
 
 \hypersetup{hidelinks}
 \newcommand{\algorithmautorefname}{Algorithm}
@@ -232,16 +235,32 @@ The early stopping mechanism is triggered by the new \texttt{CheckEarlyStopping}
 
 
 
-\subsection{Evaluation}
+\subsection{Evaluation: Exploding Liquid Simulation}
 \label{sec:evaluation}
 
 This section evaluates the performance of the early stopping mechanism described in \autoref{alg_early_stopping}. The performance of the early stopping mechanism is evaluated for different values of the maximum allowed slowdown factor, in order to determine the optimal threshold for the early stopping mechanism.
 
-All benchmarks are performed on the CoolMUC2 supercomputer \todo{reference} and are repeated 3 times to account for statistical variance.
+The benchmark is performed with the \textit{Exploding Liquid} scenario present in the \texttt{md-flexible} framework. The simulation consists of 1764 initially close-packed particles that are simulated with a Lennard-Jones potential. During the simulation, the particles rapidly expand outwards and eventually hitting the simulation boundaries\footnote{A video of the simulation can be found at \url{https://youtu.be/u7TE5KiSQ08?si=VuAsNkuFwMMq4Gw2}}.
 
-\subsubsection{Exploding Liquid Simulation [Predictive Tuning]}
+All benchmarks are performed using 14 threads on a single node of the CoolMUC2 supercomputer \todo{reference} and are repeated 3 times to account for statistical variance.
 
-The first benchmark is performed with the \textit{Exploding Liquid} scenario present in the \texttt{md-flexible} framework. The simulation consists of 1764 initially close-packed particles that are simulated with a Lennard-Jones potential. During the simulation, the particles rapidly expand outwards and eventually hitting the simulation boundaries. The simulation is run with a single thread on a single node of the CoolMUC2 supercomputer.
+\subsubsection{Full Search}
+
+This section evaluates the effect of the early stopping mechanism when using the full search strategy. The full search strategy evaluates all possible configurations in each tuning phase, without any pruning of the search space.
+
+\begin{figure}[H]
+    \centering
+
+    \includegraphics[width=\columnwidth]{../data/explodingLiquid/cluster/fullSearch/analytics/total_time_average.png}
+
+    \caption{Total Simulation Time for Exploding Liquid Simulation with Early Stopping divided in tuning and simulation phases. The total simulation time is minimal at a maximum allowed slowdown factor of $\approx4$.}
+\end{figure}
+
+Comparing the total simulation time of the full search strategy with and without early stopping, it can be seen that the early stopping mechanism can reduce the total simulation time from 36.22 seconds to 30.84 seconds when using a maximum allowed slowdown factor of 4. This is a reduction of 14.8\% in the total simulation time.
+
+\subsubsection{Predictive Tuning}
+
+Since the effect of the early stopping mechanism is expected to change under different tuning strategies, the effect of the early stopping mechanism is evaluated symbolically for the predictive tuning strategy. The predictive tuning strategy extrapolates previous performance measurements to predict the performance of configurations in the current tuning phase.
 
 \begin{figure}[H]
     \centering
@@ -252,9 +271,6 @@ The first benchmark is performed with the \textit{Exploding Liquid} scenario pre
 \end{figure}
 
 Compared to Predictive Tuning without early stopping, the early stopping mechanism can reduce the total simulation time from 28.62 seconds to 23.23 seconds when using a maximum allowed slowdown factor of 5. This is a reduction of 18.9\% in the total simulation time. The optimal threshold for the early stopping mechanism is around 5 for the \textit{Exploding Liquid} scenario.
-
-
-\subsubsection{Exploding Liquid Simulation [Full Search]}
 
 
 \subsection{Analysis and Discussion}

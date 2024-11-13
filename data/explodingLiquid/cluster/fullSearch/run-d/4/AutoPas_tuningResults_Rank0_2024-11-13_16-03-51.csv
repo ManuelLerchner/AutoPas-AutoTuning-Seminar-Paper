@@ -1,0 +1,3 @@
+Date,Iteration,Container,CellSizeFactor,Traversal,Load Estimator,Data Layout,Newton 3,tuning[ns],optimumPerformance[ns]
+2024-11-13 16:03:56,537,VerletListsCells,1.000000,vlc_sliced,none,AoS,enabled,6408999,2632339
+2024-11-13 16:04:27,6587,VerletListsCells,1.000000,vlc_sliced_balanced,none,AoS,enabled,9070855,2205552
