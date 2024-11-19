@@ -106,21 +106,21 @@ under new hardware \cite{Tchipev2020}.
 
 \subsubsection{Container}
 
-The \textit{Container} is responsible for storing the particles of the simulation such that relevant neighbor particles can be determinend efficiently. As AutoPas focuses on short-range interactions and uses a cutoff radius $r_c$, neighbor identification using just $O(N)$ distance calculations is possible \cite{Gratl2019AutoPas}. Such efficient neighbor identification are required for the simulation of large particle systems to be feasible. \autoref{fig_containers} shows the three most important container types used in AutoPas.
+The \textit{Container} is responsible for storing the particles of the simulation such that relevant neighbor particles can be determinend efficiently. As AutoPas focuses on short-range interactions and uses a cutoff radius $r_c$, neighbor identification using just $O(N)$ distance calculations is possible \cite{Gratl2019AutoPas}. Such efficient neighbor identification are required for the simulation of large particle systems to be feasible. \autoref{fig_containers} shows important container types used in AutoPas.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=\columnwidth]{figures/containers.jpg}
-    \caption{Important Container Types as depicted by \cite{Gratl2022AutoPas}. The cut-off radius $\color{red} r_c$ is shown using a red circle.}
+    \caption{Important Container Types as depicted by \cite{Gratl2022AutoPas}. The cut-off radius $r_c$ is shown using a red circle.}
     \label{fig_containers}
 \end{figure}
 
 
 \begin{itemize}
-    \item The \textit{LinkedCells} container maintains a grid of cells with a length of ${\color{red} r_c} * \textit{cellSizeFactor}$, where each cell contains a list of particles. When calculating the forces between particles, only neighboring cells (depicted as blue cells) need to be considered. All other particles are guaranteed to be outside the cut-off radius and can be ignored. \\
+    \item The \textit{LinkedCells} container maintains a grid of cells with a length of ${r_c} * \textit{cellSizeFactor}$, where each cell contains a list of particles. When calculating the forces between particles, only neighboring cells (depicted as blue cells) need to be considered. All other particles are guaranteed to be outside the cut-off radius and can be ignored. \\
           LinkedCells typically come with a big overhead of useless distance calculations (shown by the many arrows in the figure), but are very cache friendly \cite{Gratl2022AutoPas}.
 
-    \item The \textit{VerletList} container use a second radius $r_v = {\color{red} r_c} + \Delta_s$ (yellow circle) and considers all particles within this radius as potential neighbors. By introducing this buffer region, it is also possible to only rebuilt the neighbor-list every $N$ simulation steps, as long as no particle can move from outside $rc+ \Delta_s$ to inside $r_c$ unnoticed \cite{NEWCOME2023115278}. \\
+    \item The \textit{VerletList} container use a second radius $r_v = {r_c} + \Delta_s$ (yellow circle) and considers all particles within this radius as potential neighbors. By introducing this buffer region, it is also possible to only rebuilt the neighbor-list every $N$ simulation steps, as long as no particle can move from outside $rc+ \Delta_s$ to inside $r_c$ unnoticed \cite{NEWCOME2023115278}. \\
           VerletLists can reduce the number of spurious distance calculations drastically, but cause far higher memory consumptions and are less cache friendly, reducing the vectorization potential \cite{Gratl2022AutoPas}.
 
     \item The \textit{Verlet Cluster Lists} container improves on the VerletList container by grouping particles into clusters of size $M$ ($M=4$ in the figures). When calculating the forces between particles, all particles from overlapping clusters within the $r_v$ radius need to be considered.\\
@@ -132,11 +132,28 @@ The \textit{Container} is responsible for storing the particles of the simulatio
 \subsubsection{Traversal}
 
 \textit{Traversals} are responsible for iterating over the particles in the simulation and calculating the interactions between them in a shared-memory environment \cite{SECKLER2021101296}. The traversal pattern is a key aspect of the simulation engine, as it determines to which extent force calculations can be parallelized and wheter optimizations, such as Newton 3, can be applied.
-By using Newton's third law, the number of force calculations can be reduced by half, as the force between two particles is equal and opposite. Not all traversal patterns support Newton 3, as it could introduce race conditions.
 
+Newton 3 is a common optimization technique in MD simulations, which states that the force between two particles is equal and opposite. This allows for a reduction of the number of force calculations by half, as the force acting between two particles only needs to be calculated once. However, this optimization is not always possible, as it could introduce race conditions neighboring cells are processed in parallel.
 
+\autoref{fig_traversals} shows important traversal patterns used in AutoPas.
 
-\todo{Traversal Types}
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/traversals.jpg}
+    \caption{Important Traversal Types as depicted by \cite{NEWCOME2023115278}.
+        Arrows represent force calculations between cells. A double sided arrow indicates that the Newton 3 optimization is applied.}
+    \label{fig_traversals}
+\end{figure}
+
+\begin{itemize}
+    \item The \textit{C01} traversal pattern is a simple traversal pattern that processes each cell independently. Using Newton 3 for calculating forces between cells is not possible, as neighboring cells can be processed in parallel possibly resulting in race conditions. This traversal pattern is embarrassingly parallel as no synchronization is required between cells.
+    \item The \textit{C18} uses color assignments to ensure that no race conditions occur when using Newton 3. \autoref{fig_traversals} shows that the cells are colored in regular pattern, such that no two cells of the same color share neighbors. To ensure that forces are only applied once, each cell only applies Newton 3 forces to cells \textit{above} and \textit{right} of it.
+
+          During the force calculation, all available threads are assigned to a single color, and can therefore safely apply the force obtained by Newton 3 on neighboring cells. \\
+          The color groups must be processed sequentially, but the cells within a color group can be processed embarrassingly parallel again. \\
+          Due to the 18 synchronization points, it is less parallisable than the C01 traversal pattern, but causes fewer scheduling overheads as threads can work on bigger chunks of data \cite{NEWCOME2023115278}.
+    \item The \textit{C08} traversal pattern is similar to the C18 traversal pattern, but uses a different coloring scheme with only 8 colors. This reduces the number of synchronization points, resulting in a higher degree of parallelism at the cost of more scheduling overheads \cite{NEWCOME2023115278}.
+\end{itemize}
 
 
 \subsubsection{Data Layout}
@@ -279,7 +296,9 @@ All evaluated benchmarks show that there exists just a slim range of optimal thr
 
 Consequently, the optimal threshold for the early stopping mechanism is a trade-off between the overhead of evaluating suboptimal configurations and the risk of missing optimal configurations due to noise in the performance measurements.
 
-From the executed benchmarks, we deduce that the optimal threshold for the early stopping mechanism is around \todo{X} for the \textit{Exploding Liquid} scenario and around \todo{Y} for the \textit{Spinodal Decomposition} scenario, but it is expected that the optimal threshold is highly dependent on the specific simulation scenario and the environment the simulation is run in.
+From the executed benchmarks, we deduce that the optimal threshold for the early stopping mechanism is around 4-5 for the \textit{Exploding Liquid} scenario. However, the optimal threshold probably varies between different simulation scenarios and tuning strategies and further benchmarks are required to determine the optimal threshold for other scenarios.
+
+The benchmark for the predictive tuning strategy shows that the early stopping mechanism results in a higher reduction of the total simulation time compared to the full search strategy. This
 
 It is howerver noteworthy that the early stopping mechanism never caused a significant slowdown of the simulation, even if poor thresholds were chosen.
 
@@ -298,10 +317,22 @@ The parameter \textit{Particle Container} should be included in the set of param
 \newpage
 
 
-\section{State of the Art in MD Simulations}
+\section{Comparison with Other MD Engines}
+
+Well established MD engines such as GROMACS and LAMMPS have been used for many years to simulate complex molecular systems. These engines have been heavily optimized to achieve high performance on a wide range of hardware platforms. In this section, we discuss the implementations used in GROMACS and LAMMPS, and compare them with the auto-tuning capabilities of AutoPas.
 
 
 \subsection{GROMACS}
+
+Contrary to AutoPas, GROMACS only implements a single, yet highly optimized, algorithm to calculate the particle interactions. In particular, GROMACS uses a Verlet Cluster List scheme (see \autoref{fig_containers}) with statically selected parameters for the cluster size $M$ and the number of particles in a neighbor group $N_{\text{group}}$ \cite{PALL20132641}.
+The Pair list is constructed on a cluster-level
+Allows newton3
+
+
+
+https://api-depositonce.tu-berlin.de/server/api/core/bitstreams/def32eb6-1ecf-4c00-9d4b-c884b5a6ba26/content
+
+https://manual.gromacs.org/2024.0/install-guide/index.html
 
 \subsubsection{Static Optimization Techniques}
 
@@ -321,6 +352,16 @@ The parameter \textit{Particle Container} should be included in the set of param
 
 
 \subsection{Feature Comparison of MD Engines}
+
+
+
+https://api-depositonce.tu-berlin.de/server/api/core/bitstreams/def32eb6-1ecf-4c00-9d4b-c884b5a6ba26/content
+
+Both LAMMPS and
+Gromacs replicate force storage for OpenMP parallelization
+of the force calculation, leading to T times the memory
+overhead for running on T threads
+
 
 
 % Include a comparison table
