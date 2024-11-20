@@ -259,7 +259,7 @@ This section evaluates the performance of the early stopping mechanism described
 
 The benchmark is performed with the \textit{Exploding Liquid} scenario present in the \texttt{md-flexible} framework. The simulation consists of 1764 initially close-packed particles that are simulated with a Lennard-Jones potential. During the simulation, the particles rapidly expand outwards and eventually hitting the simulation boundaries\footnote{A video of the simulation can be found at \url{https://youtu.be/u7TE5KiSQ08}}.
 
-All benchmarks are performed using 14 threads on a single node of the CoolMUC2\footnote{CoolMUC-2 is a supercomputer located at the Leibniz Supercomputing Centre in Garching, Germany. See: https://doku.lrz.de/coolmuc-2-11484376.html} supercomputer and are repeated 3 times to account for statistical variance.
+All benchmarks are performed using 14 threads on a single node of the CoolMUC2\footnote{CoolMUC-2 is a supercomputer located at the Leibniz Supercomputing Centre in Garching, Germany. See: https://doku.lrz.de/coolmuc-2-11484376.html} supercomputer and are repeated 3 times to ensure reproducibility.
 
 \subsubsection{Full Search}
 
@@ -319,8 +319,7 @@ The parameter \textit{Particle Container} should be included in the set of param
 
 \section{Comparison with Other MD Engines}
 
-Well established MD engines such as GROMACS, LAMMPS and ls1 mardyn have been developed over many years and achieve high performance in their respective use cases. This section provides a short overview of those engines and highlights the differences in their implementation compared to AutoPas.
-
+Well established MD engines such as GROMACS, LAMMPS and ls1 mardyn have been developed over many years and achieve high performance in their respective use cases. This section provides a short overview of those engines and highlights the differences in their implementations.
 
 \subsection{GROMACS}
 
