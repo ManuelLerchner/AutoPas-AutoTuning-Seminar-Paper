@@ -211,3 +211,88 @@
   keywords = {Pair interactions, SIMD, GPU, Molecular dynamics, Verlet list},
   abstract = {Calculating interactions or correlations between pairs of particles is typically the most time-consuming task in particle simulation or correlation analysis. Straightforward implementations using a double loop over particle pairs have traditionally worked well, especially since compilers usually do a good job of unrolling the inner loop. In order to reach high performance on modern CPU and accelerator architectures, single-instruction multiple-data (SIMD) parallelization has become essential. Avoiding memory bottlenecks is also increasingly important and requires reducing the ratio of memory to arithmetic operations. Moreover, when pairs only interact within a certain cut-off distance, good SIMD utilization can only be achieved by reordering input and output data, which quickly becomes a limiting factor. Here we present an algorithm for SIMD parallelization based on grouping a fixed number of particles, e.g. 2, 4, or 8, into spatial clusters. Calculating all interactions between particles in a pair of such clusters improves data reuse compared to the traditional scheme and results in a more efficient SIMD parallelization. Adjusting the cluster size allows the algorithm to map to SIMD units of various widths. This flexibility not only enables fast and efficient implementation on current CPUs and accelerator architectures like GPUs or Intel MIC, but it also makes the algorithm future-proof. We present the algorithm with an application to molecular dynamics simulations, where we can also make use of the effective buffering the method introduces.}
 }
+
+@proceedings{Solving_Software_Challenges_Exascale_2014,
+  title     = {Solving Software Challenges for Exascale},
+  booktitle = {International Conference on Exascale Applications and Software (EASC 2014)},
+  year      = {2015},
+  address   = {Stockholm, Sweden},
+  date      = {2014-04-02/2014-04-03},
+  publisher = {Springer},
+  note      = {Revised Selected Papers}
+}
+
+@misc{dias2021moleculardynamicssimulationsactive,
+  title         = {Molecular Dynamics Simulations of Active Matter using LAMMPS},
+  author        = {C. S. Dias},
+  year          = {2021},
+  eprint        = {2102.10399},
+  archiveprefix = {arXiv},
+  primaryclass  = {cond-mat.soft},
+  url           = {https://arxiv.org/abs/2102.10399}
+}
+
+@article{THOMPSON2022108171,
+  title    = {LAMMPS - a flexible simulation tool for particle-based materials modeling at the atomic, meso, and continuum scales},
+  journal  = {Computer Physics Communications},
+  volume   = {271},
+  pages    = {108171},
+  year     = {2022},
+  issn     = {0010-4655},
+  doi      = {https://doi.org/10.1016/j.cpc.2021.108171},
+  url      = {https://www.sciencedirect.com/science/article/pii/S0010465521002836},
+  author   = {Aidan P. Thompson and H. Metin Aktulga and Richard Berger and Dan S. Bolintineanu and W. Michael Brown and Paul S. Crozier and Pieter J. {in 't Veld} and Axel Kohlmeyer and Stan G. Moore and Trung Dac Nguyen and Ray Shan and Mark J. Stevens and Julien Tranchida and Christian Trott and Steven J. Plimpton},
+  keywords = {Molecular dynamics, Materials modeling, Parallel algorithms, LAMMPS},
+  abstract = {Since the classical molecular dynamics simulator LAMMPS was released as an open source code in 2004, it has become a widely-used tool for particle-based modeling of materials at length scales ranging from atomic to mesoscale to continuum. Reasons for its popularity are that it provides a wide variety of particle interaction models for different materials, that it runs on any platform from a single CPU core to the largest supercomputers with accelerators, and that it gives users control over simulation details, either via the input script or by adding code for new interatomic potentials, constraints, diagnostics, or other features needed for their models. As a result, hundreds of people have contributed new capabilities to LAMMPS and it has grown from fifty thousand lines of code in 2004 to a million lines today. In this paper several of the fundamental algorithms used in LAMMPS are described along with the design strategies which have made it flexible for both users and developers. We also highlight some capabilities recently added to the code which were enabled by this flexibility, including dynamic load balancing, on-the-fly visualization, magnetic spin dynamics models, and quantum-accuracy machine learning interatomic potentials.
+              Program Summary
+              Program Title: Large-scale Atomic/Molecular Massively Parallel Simulator (LAMMPS) CPC Library link to program files: https://doi.org/10.17632/cxbxs9btsv.1 Developer's repository link: https://github.com/lammps/lammps Licensing provisions: GPLv2 Programming language: C++, Python, C, Fortran Supplementary material: https://www.lammps.org Nature of problem: Many science applications in physics, chemistry, materials science, and related fields require parallel, scalable, and efficient generation of long, stable classical particle dynamics trajectories. Within this common problem definition, there lies a great diversity of use cases, distinguished by different particle interaction models, external constraints, as well as timescales and lengthscales ranging from atomic to mesoscale to macroscopic. Solution method: The LAMMPS code uses parallel spatial decomposition, distributed neighbor lists, and parallel FFTs for long-range Coulombic interactions [1]. The time integration algorithm is based on the Størmer-Verlet symplectic integrator [2], which provides better stability than higher-order non-symplectic methods. In addition, LAMMPS supports a wide range of interatomic potentials, constraints, diagnostics, software interfaces, and pre- and post-processing features. Additional comments including restrictions and unusual features: This paper serves as the definitive reference for the LAMMPS code.
+              References
+              [1]S. Plimpton, Fast parallel algorithms for short-range molecular dynamics. J. Comp. Phys. 117 (1995) 1–19.[2]L. Verlet, Computer experiments on classical fluids: I. Thermodynamical properties of Lennard–Jones molecules, Phys. Rev. 159 (1967) 98–103.}
+}
+
+@article{ABRAHAM201519,
+  title    = {GROMACS: High performance molecular simulations through multi-level parallelism from laptops to supercomputers},
+  journal  = {SoftwareX},
+  volume   = {1-2},
+  pages    = {19-25},
+  year     = {2015},
+  issn     = {2352-7110},
+  doi      = {https://doi.org/10.1016/j.softx.2015.06.001},
+  url      = {https://www.sciencedirect.com/science/article/pii/S2352711015000059},
+  author   = {Mark James Abraham and Teemu Murtola and Roland Schulz and Szilárd Páll and Jeremy C. Smith and Berk Hess and Erik Lindahl},
+  keywords = {Molecular dynamics, GPU, SIMD, Free energy},
+  abstract = {GROMACS is one of the most widely used open-source and free software codes in chemistry, used primarily for dynamical simulations of biomolecules. It provides a rich set of calculation types, preparation and analysis tools. Several advanced techniques for free-energy calculations are supported. In version 5, it reaches new performance heights, through several new and enhanced parallelization algorithms. These work on every level; SIMD registers inside cores, multithreading, heterogeneous CPU–GPU acceleration, state-of-the-art 3D domain decomposition, and ensemble-level parallelization through built-in replica exchange and the separate Copernicus framework. The latest best-in-class compressed trajectory storage format is supported.}
+}
+
+
+
+
+
+
+
+@article{tchipev2019twe,
+  author   = {Nikola Tchipev and Steffen Seckler and Matthias Heinen and Jadran Vrabec and Fabio Gratl and Martin Horsch and Martin Bernreuther and Colin W Glass and Christoph Niethammer and Nicolay Hammer and Bernd Krischok and Michael Resch and Dieter Kranzlmüller and Hans Hasse and Hans-Joachim Bungartz and Philipp Neumann},
+  title    = {TweTriS: Twenty trillion-atom simulation},
+  journal  = {The International Journal of High Performance Computing Applications},
+  volume   = {33},
+  number   = {5},
+  pages    = {838-854},
+  year     = {2019},
+  doi      = {10.1177/1094342018819741},
+  url      = { 
+              
+              https://doi.org/10.1177/1094342018819741
+              
+              
+              
+              },
+  eprint   = { 
+              
+              https://doi.org/10.1177/1094342018819741
+              
+              
+              
+              },
+  abstract = { Significant improvements are presented for the molecular dynamics code ls1 mardyn — a linked cell-based code for simulating a large number of small, rigid molecules with application areas in chemical engineering. The changes consist of a redesign of the SIMD vectorization via wrappers, MPI improvements and a software redesign to allow memory-efficient execution with the production trunk to increase portability and extensibility. Two novel, memory-efficient OpenMP schemes for the linked cell-based force calculation are presented, which are able to retain Newton’s third law optimization. Comparisons to well-optimized Verlet list-based codes, such as LAMMPS and GROMACS, demonstrate the viability of the linked cell-based approach. The present version of ls1 mardyn is used to run simulations on entire supercomputers, maximizing the number of sampled atoms. Compared to the preceding version of ls1 mardyn on the entire set of 9216 nodes of SuperMUC, Phase 1, 27\% more atoms are simulated. Weak scaling performance is increased by up to 40\% and strong scaling performance by up to more than 220\%. On Hazel Hen, strong scaling efficiency of up to 81\% and 189 billion molecule updates per second is attained, when scaling from 8 to 7168 nodes. Moreover, a total of 20 trillion atoms is simulated at up to 88\% weak scaling efficiency running at up to 1.33 PFLOPS. This represents a fivefold increase in terms of the number of atoms simulated to date. }
+}
+

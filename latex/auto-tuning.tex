@@ -121,7 +121,7 @@ The \textit{Container} is responsible for storing the particles of the simulatio
           LinkedCells typically come with a big overhead of useless distance calculations (shown by the many arrows in the figure), but are very cache friendly \cite{Gratl2022AutoPas}.
 
     \item The \textit{VerletList} container use a second radius $r_v = {r_c} + \Delta_s$ (yellow circle) and considers all particles within this radius as potential neighbors. By introducing this buffer region, it is also possible to only rebuilt the neighbor-list every $N$ simulation steps, as long as no particle can move from outside $rc+ \Delta_s$ to inside $r_c$ unnoticed \cite{NEWCOME2023115278}. \\
-          VerletLists can reduce the number of spurious distance calculations drastically, but cause far higher memory consumptions and are less cache friendly, reducing the vectorization potential \cite{Gratl2022AutoPas}.
+          VerletLists can reduce the number of spurious distance calculations drastically, but cause far higher memory consumptions and are less cache friendly \cite{Gratl2022AutoPas}. This results in inefficient vectorization as memory operations and data shuffling can take longer than the actual force calculations \cite{PALL20132641}.
 
     \item The \textit{Verlet Cluster Lists} container improves on the VerletList container by grouping particles into clusters of size $M$ ($M=4$ in the figures). When calculating the forces between particles, all particles from overlapping clusters within the $r_v$ radius need to be considered.\\
           Naturally this increases the number of spurious distance calculations again. However the number and size of the maintained lists can be reduced drastically. Furthermore $M$ can be chosen such that efficient vectorization is possible \cite{Gratl2022AutoPas}.
@@ -319,113 +319,34 @@ The parameter \textit{Particle Container} should be included in the set of param
 
 \section{Comparison with Other MD Engines}
 
-Well established MD engines such as GROMACS and LAMMPS have been used for many years to simulate complex molecular systems. These engines have been heavily optimized to achieve high performance on a wide range of hardware platforms. In this section, we discuss the implementations used in GROMACS and LAMMPS, and compare them with the auto-tuning capabilities of AutoPas.
+Well established MD engines such as GROMACS, LAMMPS and ls1 mardyn have been developed over many years and achieve high performance in their respective use cases. This section provides a short overview of those engines and highlights the differences in their implementation compared to AutoPas.
 
 
 \subsection{GROMACS}
 
-Contrary to AutoPas, GROMACS only implements a single, yet highly optimized, algorithm to calculate the particle interactions. In particular, GROMACS uses a Verlet Cluster List scheme (see \autoref{fig_containers}) with statically selected parameters for the cluster size $M$ and the number of particles in a neighbor group $N_{\text{group}}$ \cite{PALL20132641}.
-The Pair list is constructed on a cluster-level
-Allows newton3
+Contrary to AutoPas, GROMACS only implements a single, yet highly optimized, variant of Verlet Cluster List scheme with flexible cluster sizes.
 
+Gromacs allows setting the vectorization parameters for the cluster size $M$ and the number of particles in neighbor groups $N$ statically, to tune the force calculations to the SIMD width of the system \cite{PALL20132641}. With suitable values for $M$ and $N$, computations of $M \times N$ particle interactions can be performed with just two SIMD load instructions \cite{Solving_Software_Challenges_Exascale_2014}, drastically reducing the number of memory operations required for the force calculations and reaching up to 50\% of the peak flop rate on all supported hardware platforms \cite{Solving_Software_Challenges_Exascale_2014}.
 
-
-https://api-depositonce.tu-berlin.de/server/api/core/bitstreams/def32eb6-1ecf-4c00-9d4b-c884b5a6ba26/content
-
-https://manual.gromacs.org/2024.0/install-guide/index.html
-
-\subsubsection{Static Optimization Techniques}
-
-
-\subsubsection{Dynamic Optimization Strategies}
-
-
-
+Gromacs defaults to $M=4$ and selects $N \in \{2, 4, 8\}$ depending on the SIMD width of the system. Finding good values is however very time consuming and depends on a detailed understanding of many low-level software optimization aspects of the different hardware platforms \cite{PALL20132641}. In GROMACS this tuning has to be done manually by the developers.
 
 \subsection{LAMMPS}
 
-\subsubsection{Static Optimization Techniques}
+LAMMPS implements a single, highly optimized variant of the Verlet List scheme. The neighbor list is stored globally inside a multiple-page data structure. Inside each page, vectors of neighboring particles $J$ for multiple particles $I$ are stored inside a contiguous memory block \cite{THOMPSON2022108171}, allowing for efficient loading of the neighbor list into the cache.
 
 
-\subsubsection{Dynamic Optimization Strategies}
+\subsection{ls1 mardyn}
+
+ls1 mardyn differs from the previously mentioned MD engines as it natively uses the Linked Cells algorithm for particle interactions. Using LinkedCells profived a better memory efficiency compared to both GROMACS and LAMMPS, allowing for simulations extremely large particle systems \cite{tchipev2019twe}.
+
+To overcome the limitations of a single implementation, AutoPas was successfully integrated into ls1 mardyn, providing significant speedups in certain scenarios \cite{SECKLER2021101296}.
 
 
-
-\subsection{Feature Comparison of MD Engines}
-
-
-
-https://api-depositonce.tu-berlin.de/server/api/core/bitstreams/def32eb6-1ecf-4c00-9d4b-c884b5a6ba26/content
-
-Both LAMMPS and
-Gromacs replicate force storage for OpenMP parallelization
-of the force calculation, leading to T times the memory
-overhead for running on T threads
-
-
-
-% Include a comparison table
-\begin{table}[H]
-    \caption{Feature Comparison of MD Engines}
-    \label{table_comparison}
-    \centering
-    \begin{tabular}{|l|c|c|c|}
-        \hline
-        \textbf{Feature}       & \textbf{AutoPas} & \textbf{GROMACS} & \textbf{LAMMPS} \\
-        \hline
-        Auto-tuning            & \checkmark       & Partial          & Partial         \\
-        \hline
-        GPU Support            & \checkmark       & \checkmark       & \checkmark      \\
-        \hline
-        Dynamic Load Balancing & \checkmark       & \checkmark       & \checkmark      \\
-        \hline
-    \end{tabular}
-\end{table}
-
-
-\subsection*{Limitations of those Approaches}
-
-As mentioned earlier, both GROMACS and LAMMPS focus primarily on static optimization. While these techniques are heavily optimized, both engines are not capable of performing datastructure and algorithm changes at runtime. This limitation can lead to suboptimal performance in situations where the chosen implementation is not optimal. Those situations can also arise during the simulation, when the simulation state changes such that other datastructures or algorithms would be more efficient.
-
-
-
-
-\subsection{Performance Comparison}
-
-
-Different engines excel in various scenarios:
-\begin{itemize}
-    \item Large-scale simulations
-    \item GPU-accelerated computations
-    \item Memory-constrained environments
-\end{itemize}
-
-
-
-\begin{itemize}
-    \item AutoPas demonstrates superior performance in various scenarios.
-    \item GROMACS and LAMMPS show competitive performance in specific use cases.
-    \item Auto-tuning plays a crucial role in optimizing performance across different engines.
-\end{itemize}
-
-
+\newpage
 
 \section{Conclusion}
 
-\subsection{Summary of Findings}
-
-This study provides a comprehensive comparison of auto-tuning approaches in modern MD engines, highlighting the unique advantages of AutoPas's implementation while acknowledging the strengths of established frameworks like GROMACS and LAMMPS.
-
-\subsection{Future Directions}
-
-Future research directions include:
-\begin{itemize}
-    \item Further optimization of auto-tuning strategies
-    \item Integration of machine learning techniques for performance prediction
-    \item Collaboration between MD engine developers to share optimization strategies
-\end{itemize}
-
-\cite{Gratl2019AutoPasAF}
+\todo{conclusion}
 
 
 \bibliographystyle{IEEEtran}
