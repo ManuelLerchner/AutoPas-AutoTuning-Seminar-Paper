@@ -18,6 +18,7 @@
 \usepackage{tcolorbox}
 \usepackage{hyperref}
 \usepackage[T1]{fontenc}
+\usepackage{enumitem}
 
 \setlength {\marginparwidth }{2cm}
 \usepackage{todonotes}
@@ -59,135 +60,133 @@
 \maketitle
 
 \begin{abstract}
-    Molecular dynamics (MD) simulations face significant computational challenges that require highly optimized simulation engines to deal with the enormous number of particles present in modern simulations. Naturally, researchers have put much effort into developing algorithms and frameworks that can efficiently simulate these systems. This paper focuses on the AutoPas framework, a modern MD framework that uses dynamic optimization techniques to achieve high performance in complex simulation scenarios. We compare the auto-tuning capabilities of AutoPas with other prominent MD engines, such as GROMACS, LAMMPS, and ls1 mardyn, and investigate a possible improvement to AutoPas' auto-tuning capabilities by introducing an early stopping mechanism to reduce the overhead of parameter space exploration. Our evaluation shows that an early stopping mechanism can reduce the total simulation time by up to 18.9\% when using the predictive tuning strategy. We conclude that even a naive early stopping mechanism can significantly reduce the total simulation time, when a suitable threshold is chosen.
+    Molecular dynamics (MD) simulations face significant computational challenges that require highly optimized simulation engines to deal with the enormous number of particles present in modern simulations. Naturally, researchers have put much effort into developing algorithms and frameworks that can efficiently simulate these systems. This paper focuses on the AutoPas framework, a modern MD framework that uses dynamic optimization techniques to achieve high performance in complex simulation scenarios. We compare AutoPas with other prominent MD engines, such as GROMACS, LAMMPS, and ls1 mardyn, and investigate a possible improvement to AutoPas' auto-tuning capabilities by introducing an early stopping mechanism to reduce the overhead of parameter space exploration. Our evaluation shows that an early stopping mechanism can reduce the total simulation time by up to 18.9\% when using the predictive tuning strategy.
 \end{abstract}
 
 \begin{IEEEkeywords}
-    molecular dynamics, auto-tuning, algorithm selection, performance optimization, GROMACS, LAMMPS
+    molecular dynamics, auto-tuning, autopas, early-stopping, gromacs, lammps, ls1 mardyn
 \end{IEEEkeywords}
 
 \section{Introduction}
 
-Molecular dynamics simulations represent a computational cornerstone in various scientific fields, from materials science to biochemistry. These simulations typically use complex and computationally intensive interaction models acting on enormous numbers of particles to ensure accurate results. Therefore, the computational complexity of these simulations grows rapidly with the number of particles, requiring highly optimized simulation engines to guarantee feasible simulation times.
+Molecular dynamics simulations represent a computational cornerstone in various scientific fields, from materials science to biochemistry. These simulations typically use complex and computationally intensive interaction models acting on enormous numbers of particles to ensure accurate results. Therefore, the computational complexity of these simulations grows rapidly with the number of particles, requiring highly optimized simulation engines to guarantee feasible simulation times. Prominent optimization techniques used in modern molecular dynamics (MD) engines fall into two main categories: static and dynamic optimization.
 
-Prominent optimization techniques used in modern molecular dynamics (MD) engines fall into two main categories: static and dynamic optimization.
+Static optimizations rely on predefined configurations and performance models, often fine-tuned for specific hardware architectures. They are selected before the simulation begins and remain constant throughout the simulation. Static optimizations include automatic optimizations performed by modern compilers (e.g., loop unrolling, inlining, auto-vectorization), conditional compilation based on the target hardware (e.g. SIMD)~\cite{Gratl2019AutoPas}, or manual selection of simulation parameters based on expert knowledge.
 
-Static optimizations rely on predefined configurations and performance models, often fine-tuned for specific hardware architectures. They are selected before the simulation begins and remain constant throughout the simulation. Static optimizations include automatic optimizations performed by modern compilers (e.g., loop unrolling, inlining, auto-vectorization), conditional compilation based on the target hardware (e.g. SIMD) \cite{Gratl2019AutoPas}, or manual selection of simulation parameters based on expert knowledge.
-
-Dynamic optimizations adjust parameters based on the current simulation state and the actual hardware performance. Unlike static optimizations, dynamic optimizations allow for adjustments throughout the simulation. This approach is favourable, as the engine can adapt and optimize itself as the simulation progresses. However, dynamic optimizations come at the cost of increased complexity and potential overhead, as the engine must periodically re-evaluate its configuration based on the current simulation state. Dynamic optimizations also eliminates the need for expert knowledge to determine the optimal configuration, offering a more user-friendly experience and enhancing the engines adaptability to new hardware or simulation scenarios.
-
+Dynamic optimizations adjust parameters based on the current simulation state and the actual hardware performance. Unlike static optimizations, dynamic optimizations allow for adjustments throughout the simulation. This approach is favourable, as the engine can adapt and optimize itself without external intervention and can adapt itself to the progressing simulation. However, dynamic optimizations come at the cost of increased complexity and potential overhead, as the engine must periodically re-evaluate its configuration based on the current simulation state.
 
 In particular, we will focus on the auto-tuning capabilities of AutoPas, a modern MD framework that focuses on dynamic optimization techniques to achieve high performance in complex and possibly changing simulation scenarios. We compare AutoPas with other prominent MD engines, such as GROMACS, LAMMPS, and ls1 mardyn, and investigate a possible improvement to AutoPas' auto-tuning capabilities by introducing an early stopping mechanism to reduce the overhead of parameter space exploration.
 
 
 \section{AutoPas}
 
-AutoPas was developed on the basis of creating an efficient particle / N-Body simulation engine applicable to a wide range of applications \cite{Tchipev2020}. To support these various simulations, AutoPas is built on a modular software architecture that allows different algorithms and data structures to be used interchangeably in the underlying simulation engine. AutoPas acts as a middleware between the simulation code provided by the user and various implementations of algorithms and data structures, which are chosen dynamically based on performance criteria by so-called \textit{tuning strategies}. \autoref{fig_architecture} shows a high-level overview of the AutoPas library structure.
+AutoPas was developed on the basis of creating an efficient particle / N-Body simulation engine applicable to a wide range of applications~\cite{Tchipev2020}. Therefore, AutoPas is built on a modular software architecture that allows different algorithms and data structures to be used interchangeably in the underlying simulation engine. AutoPas acts as a middleware between the simulation code provided by the user and various implementations of algorithms and data structures capable of solving N-Body problems efficiently. As all implementations are (mostly) interchangeable, AutoPas can provide a wide range of so called \textit{Configurations} which fully describe the internal implementation of the engine.
+To lift the burden of selecting suitable configurations from the user, and to allow for dynamic optimization, AutoPas provides an auto-tuning framework that periodically evaluates different configurations and selects the best one based on certain performance metrics. This selection is performed by so-called \textit{TuningStrategies} that try to prune the search space of possible configurations according to a specific strategy. \autoref{fig_architecture} shows a high-level overview of the AutoPas library structure.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=2.2in]{figures/AutoPasLibraryStructure.png}
-    \caption{AutoPas Library Structure as depicted by \cite{Newcome2023Poster}}
+    \caption{AutoPas Library Structure as depicted by~\cite{Newcome2023Poster}}
     \label{fig_architecture}
 \end{figure}
 
 \subsection{Algorithm Library}
 
-All different algorithmic implementations for solving N-Body problems are part of the so-called \textit{Algorithm Library} of AutoPas. The \textit{Algorithm Library} contains different implementations for certain key aspects of the simulation, such as neighbor identification, traversal patterns, and memory layouts.
+All different algorithmic implementations for solving N-Body problems are part of the so-called \textit{Algorithm Library} of AutoPas. The \textit{Algorithm Library} contains different implementations for certain key aspects of the simulation, such as neighbor identification, traversal patterns, memory layouts and optimization techniques.
 
-Together they form a so-called \textit{Configuration} fully describing the internal implementation of the engine. Such a configuration is a 6-tuple consisting of implementations for: \textit{Container}, \textit{Traversal}, \textit{Load Estimator}, \textit{Data Layout}, \textit{Newton 3}, and \textit{Cell Size Factor}.
+A combination of different implementations for each key aspect of the simulation is called a \textit{Configuration}. Currently AutoPas supports the six tunable parameters: \textit{Container}, \textit{Traversal}, \textit{Load Estimator}, \textit{Data Layout}, \textit{Newton 3}, and \textit{Cell Size Factor}.
 
-An obvious benefit of this modular approach is the ability to easily swap out implementations for certain simulation aspects without changing the entire codebase, allowing for straightforward investigation of different implementations and quickly adapting to new hardware or simulation scenarios.
+As implementations for a tunable parameter are (mostly) interchangeable, it is straightforward to create new, potentially hardware-specific, implementations for each key aspect of the simulation, allowing for both a bigger search space of possible configurations and performance portability across different hardware platforms~\cite{Tchipev2020}. Another benefit of this modular approach is presented with the implicit backward compatibility of the interchangable implementations. With the ever growing number of configurations, it is possible to test the feasibility of older implementations under new hardware~\cite{Tchipev2020}.
 
-Another benefit of this modular approach is presented with the ever-growing configuration library of AutoPas. As the library is constantly updated and new implementations targeting specific hardware or simulation scenarios are added, it is possible to easily test the feasibility of older implementations
-under new hardware \cite{Tchipev2020}.
+The next sections will provide a detailed overview of prominent tunable parameters and the different implementations available in the AutoPas framework.
 
+\begin{description}[style=nextline]
+    \item[Container]
 
-\subsubsection{Container}
+        Containers are responsible for storing the particles of the simulation such that relevant neighbor particles can be determined efficiently. As AutoPas focuses on short-range interactions with a force cutoff radius $r_c$, neighbor identification using just $O(N)$ distance calculations is possible~\cite{Gratl2019AutoPas}, drastically reducing the computational complexity of the simulation. \autoref{fig_containers} shows important container types used in AutoPas.
 
-The \textit{Container} is responsible for storing the particles of the simulation such that relevant neighbor particles can be determined efficiently. As AutoPas focuses on short-range interactions and uses a cutoff radius $r_c$, neighbor identification using just $O(N)$ distance calculations is possible \cite{Gratl2019AutoPas}. Such efficient neighbor identification is required to make the simulation of large particle systems feasible. \autoref{fig_containers} shows important container types used in AutoPas.
+        \begin{figure}[h]
+            \centering
+            \includegraphics[width=\columnwidth]{figures/containers.jpg}
+            \caption{Important Container Types as depited by~\cite{Gratl2022AutoPas}. The cutoff radius $r_c$ is shown using a red circle. The arrows represent distance checks between particles. Only particles shown in blue contribute to the final force calculation.}
+            \label{fig_containers}
+        \end{figure}
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=\columnwidth]{figures/containers.jpg}
-    \caption{Important Container Types as depicted by \cite{Gratl2022AutoPas}. The cutoff radius $r_c$ is shown using a red circle.}
-    \label{fig_containers}
-\end{figure}
+        \begin{description}[style=nextline, font=\itshape\mdseries]
+            \item[LinkedCells]
+                The LinkedCells algorithm maintains a grid of cells with a length of $r_c$ (when $cellSizeFactor = 1$). When calculating forces for a particle, only particles in neighboring cells (depicted in blue) need to be considered, as all other particles are guaranteed to be outside the cutoff radius.
 
+                LinkedCell casues many spurious distance calculations (shown by many arrows to gray particles in the figure). As particles for a cell can be stored together in memory, LinkedCells are however very cache-friendly~\cite{Gratl2022AutoPas}.
 
-\begin{itemize}
-    \item The \textit{LinkedCells} container maintains a grid of cells with a length of ${r_c} * \textit{cellSizeFactor}$, where each cell contains a list of particles. Only neighboring cells (depicted as blue cells) need to be considered when calculating the forces between particles. All other particles are guaranteed to be outside the cutoff radius and can be ignored. \\
-          LinkedCells typically have a significant overhead of useless distance calculations (shown by the many arrows in the figure) but are very cache-friendly \cite{Gratl2022AutoPas}.
+            \item[VerletLists]
+                The VerletList algorithm uses a second radius $r_v = {r_c} + \Delta_s$ (yellow circle) and considers all particles within this radius as potential neighbors. Contrary to LinkedCells, each particle maintains its own list of potential neighbors. As the bigger radius $r_v$ provides a buffer region, it is possible to only rebuild the neighbor-list every $n$ simulation steps, as long as no particle can move from outside $r_c + \Delta_s$ to inside $r_c$ unnoticed~\cite{NEWCOME2023115278}.
 
-    \item The \textit{VerletList} container uses a second radius $r_v = {r_c} + \Delta_s$ (yellow circle) and considers all particles within this radius as potential neighbors. By introducing this buffer region, it is also possible to only rebuilt the neighbor-list every $N$ simulation step, as long as no particle can move from outside $rc+ \Delta_s$ to inside $r_c$ unnoticed \cite{NEWCOME2023115278}. \\
-          VerletLists can drastically reduce spurious distance calculations but cause far higher memory consumptions and are less cache-friendly \cite{Gratl2022AutoPas}. This results in inefficient vectorization as memory operations and data shuffling can take longer than the actual force calculations \cite{PALL20132641}.
+                VerletLists have very few spurious distance calculations but result in far higher memory consumptions and are less cache-friendly~\cite{Gratl2022AutoPas}, resulting in inefficient vectorization~\cite{PALL20132641}.
 
-    \item The \textit{Verlet Cluster Lists} container improves on the VerletList container by grouping particles into clusters of size $M$ ($M=4$ in the figures). When calculating the forces between particles, all particles from overlapping clusters within the $r_v$ radius need to be considered.\\
-          Naturally, this increases the number of spurious distance calculations again. However, the number and size of the maintained lists can be reduced drastically. Furthermore, $M$ can be chosen to make efficient vectorization possible \cite{Gratl2022AutoPas}.
+            \item[VerletClusterList]
+                The Verlet Cluster Lists algorithm improves on the VerletList algorithm by grouping particles into clusters of size $M$ ($M=4$ in the figures). Maintaining the neighbor list and keeping track of buffer regions is done on a cluster level, reducing the memory overhead of the VerletList algorithm.
 
-\end{itemize}
-
-
-\subsubsection{Traversal}
-
-\textit{Traversals} is responsible for iterating over the particles in the simulation and calculating their interactions in a shared-memory environment \cite{SECKLER2021101296}. The traversal pattern is a key aspect of the simulation engine, as it determines to which extent force calculations can be parallelized and whether optimizations, such as Newton 3, can be applied.
-
-Newton 3 is a common optimization technique in MD simulations, which states that the force between two particles is equal and opposite. This allows for a reduction of the number of force calculations by half, as the force acting between two particles only needs to be calculated once. However, this optimization is only sometimes possible, as it could introduce race conditions in neighboring cells that are processed in parallel.
-
-\autoref{fig_traversals} shows important traversal patterns used in AutoPas.
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=\columnwidth]{figures/traversals.jpg}
-    \caption{Important Traversal Types as depicted by \cite{NEWCOME2023115278}.
-        Arrows represent force calculations between cells. A double-sided arrow indicates that the Newton 3 optimization is applied.}
-    \label{fig_traversals}
-\end{figure}
-
-\begin{itemize}
-    \item The \textit{C01} traversal pattern is a simple traversal pattern that processes each cell independently. Using Newton 3 to calculate forces between cells is impossible, as neighboring cells can be processed in parallel, possibly resulting in race conditions. This traversal pattern is embarrassingly parallel, with no synchronization between cells.
-    \item The \textit{C18} uses color assignments to ensure that no race conditions occur when using Newton 3. \autoref{fig_traversals} shows that the cells are colored in a regular pattern, such that no two cells of the same color share neighbors. To ensure that forces are only applied once, each cell only applies Newton 3 forces to cells \textit{above} and \textit{right} of it.
-
-          During the force calculation, all available threads are assigned to a single color, and can therefore safely apply the force obtained by Newton 3 on neighboring cells. \\
-          The color groups must be processed sequentially, but the cells within a color group can be processed embarrassingly parallel again. \\
-          Due to the 18 synchronization points, it is less parallelizable than the C01 traversal pattern but causes fewer scheduling overheads as threads can work on bigger chunks of data \cite{NEWCOME2023115278}.
-    \item The \textit{C08} traversal pattern is similar to the C18 traversal pattern but uses a different coloring scheme with only eight colors. This reduces the number of synchronization points, resulting in a higher degree of parallelism at the cost of more scheduling overheads \cite{NEWCOME2023115278}.
-\end{itemize}
+                As all particles in overlapping clusters need to be considered for the force calculation, the number of spurious distance calculations increases again. When $M$ is chosen in accordance with the SIMD width of the system, efficient vectorization is possible~\cite{Gratl2022AutoPas}.
+        \end{description}
 
 
-\subsubsection{Data Layout}
+    \item[Newton 3]
+        Applying Newton's third law to the force calculations allows for a reduction of the number of force calculations by half, as the calculated force between two particles can be reused for the second particle. The optimization can be enabled or disabled in accordance with the interaction model and the traversal pattern.
 
-The \textit{Data Layout} is responsible for how the particle data is stored in memory. The choice of data layout can significantly impact the simulation engine's performance, as it determines the memory access patterns and the potential for vectorization. Possible choices are \textit{SoA} (Structure of Arrays) and \textit{AoS} (Array of Structures). \textit{SoA} is typically more cache-friendly and allows for better vectorization. However, it causes information about a single particle to be spread across multiple memory locations. \textit{AoS} on the other hand stores all information about a single particle together but prohibits efficient vectorization as filling vector registers requires gathering data from multiple memory locations.
+    \item[Traversal]
+        Traversals are responsible for iterating over the particles in the simulation and calculating their interactions in a shared-memory environment~\cite{SECKLER2021101296}. The traversal pattern determines to which extent force calculations can be parallelized and whether optimizations, such as Newton 3, can be applied. \autoref{fig_traversals} shows important traversal patterns used in AutoPas.
+
+        \begin{figure}[H]
+            \centering
+            \includegraphics[width=\columnwidth]{figures/traversals.jpg}
+            \caption{Important Traversal Types as depicted by~\cite{NEWCOME2023115278}.}
+            \label{fig_traversals}
+        \end{figure}
+
+        \begin{description}[style=nextline, font=\itshape\mdseries]
+            \item[C01]
+                The C01 traversal pattern processes each cell independently, resulting in an embarrassingly parallel traversal pattern. Newton 3 can not be used in this traversal pattern, as neighboring cells can be processed in parallel, which could result in race conditions. No synchronization between cells is required, resulting in a high degree of parallelism.
+            \item[C18]
+                The C18 traversal pattern uses color assignments to ensure that no race conditions occur when using Newton 3. \autoref{fig_traversals} shows that the cells are colored in a regular pattern, such that no two cells of the same color share common neighbors. To ensure that forces are only applied once when using Newton 3, each cell only applies forces to cells \textit{above} and \textit{right} of it.
+
+                During the force calculation, all available threads are working on a single color, and can therefore safely apply the force obtained by Newton 3 on neighboring cells. \\
+                The color groups must be processed sequentially, resulting in 18 synchronization points. Each color can however be fully processed in parallel, still resulting in a high overall degree of parallelism ~\cite{NEWCOME2023115278}.
+            \item[C08]
+                traversal pattern is similar to the C18 traversal pattern but uses a different coloring scheme with only eight colors. This reduces the number of synchronization points, resulting in a higher degree of parallelism at the cost of more scheduling overheads~\cite{NEWCOME2023115278}.
+        \end{description}
+
+    \item[Data Layout]
+        The Data Layout describes how the particle data is stored in memory. Possible choices are \textit{SoA} (Structure of Arrays) and \textit{AoS} (Array of Structures). \textit{SoA} is typically more cache-friendly and allows for better vectorization. However, it causes information about a single particle to be spread across multiple memory locations. \textit{AoS} on the other hand stores all information about a single particle together but prohibits efficient vectorization as filling vector registers requires gathering data from multiple memory locations.
+\end{description}
 
 
 \subsection{Auto-Tuning Framework}
 
-Manually selecting the best implementations for each tunable parameter is a daunting task and would require extensive domain knowledge that is challenging to acquire and maintain under the constantly changing software and hardware landscape. To address this issue, AutoPas performs automated algorithm selection to maximize specific performance metrics, such as simulation speed or energy efficiency \cite{Gratl2022AutoPas}. The auto-tuning framework of AutoPas periodically initiates so-called \textit{tuning-phases} in which it measures. It evaluates promising\footnote{Promising configurations are suggested by so-called TuningStragies} configurations in order to determine the best Configuration for the current simulation state \cite{Gratl2019AutoPas}. The winning Configuration is then used until the next tuning phase is initiated.
+As described previously, manual selection of suitable implementations for each tunable parameter is a daunting task and would require extensive domain knowledge that is challenging to acquire and maintain under the constantly changing software and hardware landscape. To address this issue, AutoPas performs automated algorithm selection to maximize specific performance metrics, such as simulation speed or energy efficiency~\cite{Gratl2022AutoPas}. Internally AutoPas periodically initiates so-called \textit{tuning-phases} in which promising configurations are evaluated, in order to determine the best Configuration for the current simulation state~\cite{Gratl2019AutoPas}. The winning Configuration is then used until the next tuning phase is initiated.
 
-The key to efficient tuning phases is the ability to efficiently determine promising configurations. Just using the naive approach of evaluating all possible configurations turns out to be infeasible in practice, as many of the naively evaluated configurations turn out to be orders of magnitude slower than the best-known Configuration, thus causing a drastic increase of the total simulation time \cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}.
-As AutoPas is developed further and new implementations are added to the algorithm portfolio, the number of possible configurations will steadily increase, exacerbating the problem of evaluating all configurations naively.
+The key to efficient tuning phases is the ability to efficiently determine promising configurations. The naive approach of evaluating all possible configurations is infeasible in practice, as many of the naively evaluated configurations turn out to be orders of magnitude slower than the best-known Configuration, thus causing a drastic increase of the total simulation time~\cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}.
+As AutoPas is developed further and new implementations are added to the algorithm library, the number of possible configurations will steadily increase, constantly exacerbating the problem of evaluating all configurations naively.
 
-AutoPas attempts to mitigate this problem by using so-called \textit{TuningStrategies}, which prune the search space of possible configurations based on specific criteria \cite{Gratl2019AutoPas}. Tuning strategies are tasked with pruning enough configurations to make the tuning phase feasible, but not too many, to avoid missing the optimal Configuration. Tuning strategies need to balance the trade-off between potentially finding a better configuration and the cost of potentially encountering worse configurations during exploration \cite{Newcome2023Poster}.
+AutoPas attempts to mitigate this problem by using Tuning Strategies to select promising configurations. Tuning strategies are tasked with pruning enough configurations to make the tuning phase feasible, but not too many, to avoid missing the optimal Configuration.
+Tuning strategies balance the trade-off between potentially finding a better configuration and the cost of potentially encountering worse configurations during further exploration~\cite{Newcome2023Poster}.
 
+
+\todo{Add some tuning strategies}
 
 
 \subsection{Static Optimization Techniques}
 
-Compilers apply static optimization techniques to generate efficient machine code for hardware architecture. As modern compilers are aimed at generating good average performance across a wide range of hardware platforms, default optimization settings are often not optimal for a specific hardware platform and application \cite{fursin2014collectivetuninginitiative}, and some extra effort is required to tune the compiler settings to the specific hardware and application.
-
-Another way to improve the performance of the generated code is profile-guided optimizations. Profile-guided optimizations use prior performance data collected during a simulation run to optimize the generated code for the specific workload during the following compilation.
-
-Apart from the static optimization already performed by modern compilers, AutoPas can perform basic tuning at compile time. As AutoPas hower primarily aims at dynamic optimization, the static optimization capabilities are limited to a set of compile-time flags that can be used to statically turn on or off certain features of the simulation engine, such as SIMD instructions, MPI support, or Auto-Vectorization \cite{Gratl2019AutoPas}. Those flags primarily aim at ensuring that the simulation engine can utilize the full potential of the hardware it is run on, but they are not used directly to tune the performance of the simulation engine.
+AutoPas can perform basic tuning at compile time by using compile-time flags to conditionally compile certain features of the simulation engine, such as SIMD instructions, MPI support, or to enable auto-vectorization. Those flags primarily aim at ensuring that the simulation engine can utilize the full potential of the hardware it is run on.
 
 \subsubsection{Kokkos Integration}
 
-There are, however, attempts to expand the static optimization capabilities of AutoPas beyond just compile-time flags. One such attempt is the integration of the Kokkos library into AutoPas, aiming to provide performance portability across different hardware platforms and be able to run existing algorithms on GPGPUs \cite{Gärtner_KokkosInAutoPas.pdf}.
+There are, attempts to expand the static optimization capabilities of AutoPas beyond just compile-time flags. One such attempt is the integration of the Kokkos library into AutoPas, aiming to provide performance portability across different hardware platforms and be able to run existing algorithms on GPGPUs~\cite{Gärtner_KokkosInAutoPas.pdf}.
 
-Kokkos is a performance-portable parallel programming model supporting diverse high-performance computing environments \cite{CARTEREDWARDS20143202}. Kokkos provides high-level C++ abstractions for parallel execution and memory management, enabling developers to write performance-portable code that can be compiled for different hardware architectures, including GPUs, Intel Xeon Phis, or many-core CPUs \cite{lammps_kokkos}.
+Kokkos is a performance-portable parallel programming model supporting diverse high-performance computing environments~\cite{CARTEREDWARDS20143202}. Kokkos provides high-level C++ abstractions for parallel execution and memory management, enabling developers to write performance-portable code that can be compiled for different hardware architectures, including GPUs, Intel Xeon Phis, or many-core CPUs~\cite{lammps_kokkos}.
 
-The integration is still experimental and incapable of targeting systems other than conventional multi-core CPUs \cite{Gärtner_KokkosInAutoPas.pdf}.
+The integration is still experimental and incapable of targeting systems other than conventional multi-core CPUs~\cite{Gärtner_KokkosInAutoPas.pdf}.
 
-Full integration of Kokkos into AutoPas could be beneficial as classical MD Simulation engines such as LAMMPS have demonstrated performance benefits from using Kokkos, particularly on extensive simulations on GPUs \cite{lammps_kokkos}. Supporting various hardware platforms could further demonstrate the usefulness of the AutoPas framework, as the performance of the algorithm library is highly dependent on the underlying hardware \cite{SECKLER2021101296} and changes in the optimal Configuration are expected.
+Full integration of Kokkos into AutoPas could be beneficial as classical MD Simulation engines such as LAMMPS have demonstrated performance benefits from using Kokkos, particularly on extensive simulations on GPUs~\cite{lammps_kokkos}. Supporting various hardware platforms could further demonstrate the usefulness of the AutoPas framework, as the performance of the algorithm library is highly dependent on the underlying hardware~\cite{SECKLER2021101296} and changes in the optimal Configuration are expected.
 
 \section{Demonstration of Benefits of AutoTuning}
 
@@ -202,13 +201,13 @@ The currently provided example runs from \texttt{md-flexible} are insufficient t
 
 \section{Early Stopping Optimization}
 
-As identified by \cite{autopas_issue673}\cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}, overhead caused by evaluating suboptimal configurations during the tuning phase can be a significant bottleneck in the performance of the AutoPas framework. Even though the tuning strategies employed by AutoPas are highly efficient, they still suggest many configurations that could be more optimal. Rule-driven tuning strategies such as \textit{RuleBasedTuning} and \textit{FuzzyTuning} can mitigate this problem to some extent, but due to the complexity of particle simulations, those rule bases are expected to be highly incomplete.
+As identified by~\cite{autopas_issue673}\cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}, overhead caused by evaluating suboptimal configurations during the tuning phase can be a significant bottleneck in the performance of the AutoPas framework. Even though the tuning strategies employed by AutoPas are highly efficient, they still suggest many configurations that could be more optimal. Rule-driven tuning strategies such as \textit{RuleBasedTuning} and \textit{FuzzyTuning} can mitigate this problem to some extent, but due to the complexity of particle simulations, those rule bases are expected to be highly incomplete.
 
 All mentioned sources suggest that some form of \textit{early stopping} mechanism could benefit the AutoPas framework. The primary goal of such a mechanism would be to detect tuning iterations that take much longer than the currently best-known Configuration and stop the evaluation of those configurations early. There are two approaches to this problem:
 
 \begin{itemize}
     \item \textbf{Stopping Further Samples:} Currently, AutoPas supports testing a certain parameter configuration multiple times to get a more accurate and stable performance measurement. A simple way to implement early stopping will be to stop evaluating further samples of a configuration if the performance of a sample is significantly worse than the best-known Configuration. The implementation of this approach is relatively simple, but it is coarse-grained as all started samples would still be evaluated fully.
-    \item \textbf{Interrupting the Evaluation:} A more fine-grained approach, as proposed in \cite{endreport.pdf} would be to interrupt the evaluation of a configuration as soon as it is clear that the performance is significantly worse than the best-known Configuration. This is way more difficult to implement, as it would require the ability to interrupt the evaluation of a configuration at any time. Especially in an MPI environment with multiple nodes, aborting and resetting the simulation to a consistent state would require a lot of synchronization and communication work.
+    \item \textbf{Interrupting the Evaluation:} A more fine-grained approach, as proposed in~\cite{endreport.pdf} would be to interrupt the evaluation of a configuration as soon as it is clear that the performance is significantly worse than the best-known Configuration. This is way more difficult to implement, as it would require the ability to interrupt the evaluation of a configuration at any time. Especially in an MPI environment with multiple nodes, aborting and resetting the simulation to a consistent state would require a lot of synchronization and communication work.
 \end{itemize}
 
 Both mentioned approaches require a user-defined threshold for the maximum allowed slowdown of a configuration before it should be stopped. This threshold will be determined empirically in \autoref{sec:evaluation}.
@@ -309,7 +308,7 @@ As the current implementation is only capable of stopping further samples of a c
 
 A crude way to implement this would be to create a set of parameters most influential to the performance of the simulation (for example \{\textit{Particle Container}, \textit{Data Layout}\}) and blacklist configurations that use specific values if there is enough evidence that a configuration with those values is not a good choice for the current simulation scenario (potentially if more than $X$\% of samples using specific values are stopped early).
 
-The parameter \textit{Particle Container} should be included in the set of parameters to blacklist, as it is known to be highly influential to the performance of the simulation \cite{Gratl2019AutoPas}.
+The parameter \textit{Particle Container} should be included in the set of parameters to blacklist, as it is known to be highly influential to the performance of the simulation~\cite{Gratl2019AutoPas}.
 
 
 \newpage
@@ -324,24 +323,24 @@ Well-established MD engines such as GROMACS, LAMMPS, and ls1 mardyn have been de
 
 Contrary to AutoPas, GROMACS only implements a single, highly optimized Verlet Cluster List scheme variant with flexible cluster sizes specifically designed for good SIMD vectorization.
 
-Gromacs allows setting the vectorization parameters for the cluster size $M$ and the number of particles in neighbor groups $N$ statically to tune the force calculations to the SIMD width of the system \cite{PALL20132641}. With suitable values for $M$ and $N$, computations of $M \times N$ particle interactions can be performed with just two SIMD load instructions \cite{Solving_Software_Challenges_Exascale_2014}, drastically reducing the number of memory operations required for the force calculations and reaching up to 50\% of the peak flop rate on all supported hardware platforms \cite{Solving_Software_Challenges_Exascale_2014}.
+Gromacs allows setting the vectorization parameters for the cluster size $M$ and the number of particles in neighbor groups $N$ statically to tune the force calculations to the SIMD width of the system~\cite{PALL20132641}. With suitable values for $M$ and $N$, computations of $M \times N$ particle interactions can be performed with just two SIMD load instructions~\cite{Solving_Software_Challenges_Exascale_2014}, drastically reducing the number of memory operations required for the force calculations and reaching up to 50\% of the peak flop rate on all supported hardware platforms~\cite{Solving_Software_Challenges_Exascale_2014}.
 
-Gromacs defaults to $M=4$ and selects $N \in \{2, 4, 8\}$ depending on the SIMD width of the system. However, Finding good values is very time-consuming and depends on a detailed understanding of many low-level software optimization aspects of the different hardware platforms \cite{PALL20132641}. In GROMACS, the developers have to manually tune this tuning.
+Gromacs defaults to $M=4$ and selects $N \in \{2, 4, 8\}$ depending on the SIMD width of the system. However, Finding good values is very time-consuming and depends on a detailed understanding of many low-level software optimization aspects of the different hardware platforms~\cite{PALL20132641}. In GROMACS, the developers have to manually tune this tuning.
 
 \subsection{LAMMPS}
 
-LAMMPS implements a single, highly optimized variant of the Verlet List scheme. The neighbor list is stored globally inside a multiple-page data structure. Inside each page, vectors of neighboring particles $J$ for multiple particles $I$ are stored inside a contiguous memory block \cite{THOMPSON2022108171}, efficiently loading the neighbor list into the cache.
-All particles are stored in a \textit{SoA} (Structure of Arrays) data layout \cite{THOMPSON2022108171}.
+LAMMPS implements a single, highly optimized variant of the Verlet List scheme. The neighbor list is stored globally inside a multiple-page data structure. Inside each page, vectors of neighboring particles $J$ for multiple particles $I$ are stored inside a contiguous memory block~\cite{THOMPSON2022108171}, efficiently loading the neighbor list into the cache.
+All particles are stored in a \textit{SoA} (Structure of Arrays) data layout~\cite{THOMPSON2022108171}.
 
 LAMMPS supports accelerator packages using either CUDA, OpenCL, ROCm/HIP or OpenMP threads, hand-optimized
-code, generically optimized code, and code using the KOKKOS library \cite{Seckler2021}.
+code, generically optimized code, and code using the KOKKOS library~\cite{Seckler2021}.
 
 
 \subsection{ls1 mardyn}
 
-ls1 mardyn differs from the previously mentioned MD engines as it uses the Linked Cells algorithm for particle interactions. Using LinkedCells provides a better memory efficiency than GROMACS and LAMMPS, allowing for simulations of massive particle systems \cite{tchipev2019twe}. Internally, ls1 mardyn uses the default data layout of \textit{AoS} (Array of Structures) for the particle data. However, particular branches aimed at simulating massive particle systems can use a \texttt{RMM} (Reduced Memory Mode) layout in combination with a \textit{SoA} (Structure of Arrays) data layout, allowing for simulations of up to twenty trillion atoms \cite{tchipev2019twe}.
+ls1 mardyn differs from the previously mentioned MD engines as it uses the Linked Cells algorithm for particle interactions. Using LinkedCells provides a better memory efficiency than GROMACS and LAMMPS, allowing for simulations of massive particle systems~\cite{tchipev2019twe}. Internally, ls1 mardyn uses the default data layout of \textit{AoS} (Array of Structures) for the particle data. However, particular branches aimed at simulating massive particle systems can use a \texttt{RMM} (Reduced Memory Mode) layout in combination with a \textit{SoA} (Structure of Arrays) data layout, allowing for simulations of up to twenty trillion atoms~\cite{tchipev2019twe}.
 
-To overcome the limitations of a single implementation, AutoPas was successfully integrated into ls1 mardyn, providing significant speedups in specific scenarios \cite{SECKLER2021101296}.
+To overcome the limitations of a single implementation, AutoPas was successfully integrated into ls1 mardyn, providing significant speedups in specific scenarios~\cite{SECKLER2021101296}.
 
 
 \newpage
