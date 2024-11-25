@@ -323,7 +323,7 @@ Well established MD engines such as GROMACS, LAMMPS and ls1 mardyn have been dev
 
 \subsection{GROMACS}
 
-Contrary to AutoPas, GROMACS only implements a single, yet highly optimized, variant of Verlet Cluster List scheme with flexible cluster sizes.
+Contrary to AutoPas, GROMACS only implements a single, yet highly optimized, variant of Verlet Cluster List scheme with flexible cluster sizes, specifically designed good SIMD vectorization.
 
 Gromacs allows setting the vectorization parameters for the cluster size $M$ and the number of particles in neighbor groups $N$ statically, to tune the force calculations to the SIMD width of the system \cite{PALL20132641}. With suitable values for $M$ and $N$, computations of $M \times N$ particle interactions can be performed with just two SIMD load instructions \cite{Solving_Software_Challenges_Exascale_2014}, drastically reducing the number of memory operations required for the force calculations and reaching up to 50\% of the peak flop rate on all supported hardware platforms \cite{Solving_Software_Challenges_Exascale_2014}.
 
@@ -332,11 +332,15 @@ Gromacs defaults to $M=4$ and selects $N \in \{2, 4, 8\}$ depending on the SIMD 
 \subsection{LAMMPS}
 
 LAMMPS implements a single, highly optimized variant of the Verlet List scheme. The neighbor list is stored globally inside a multiple-page data structure. Inside each page, vectors of neighboring particles $J$ for multiple particles $I$ are stored inside a contiguous memory block \cite{THOMPSON2022108171}, allowing for efficient loading of the neighbor list into the cache.
+All particles are stored in a \textit{SoA} (Structure of Arrays) data layout \cite{THOMPSON2022108171}.
+
+LAMMPS supports accelerator packages using either CUDA, OpenCL, ROCm/HIP, or OpenMP threads, hand-optimized
+code, generically optimized code, and code using the KOKKOS library \cite{Seckler2021}.
 
 
 \subsection{ls1 mardyn}
 
-ls1 mardyn differs from the previously mentioned MD engines as it natively uses the Linked Cells algorithm for particle interactions. Using LinkedCells profived a better memory efficiency compared to both GROMACS and LAMMPS, allowing for simulations extremely large particle systems \cite{tchipev2019twe}.
+ls1 mardyn differs from the previously mentioned MD engines as it uses the Linked Cells algorithm for particle interactions. Using LinkedCells profives a better memory efficiency compared to both GROMACS and LAMMPS, allowing for simulations extremely large particle systems \cite{tchipev2019twe}. Internally, ls1 mardyn uses the default data layout of \textit{AoS} (Array of Structures) for the particle data. However special branches, aimed at simulating extremely large particle systems, can use a \texttt{RMM} (Reduced Memory Mode) layout, in combination with a \textit{SoA} (Structure of Arrays) data layout, allowing for simulations of up to twenty trillion atoms \cite{tchipev2019twe}.
 
 To overcome the limitations of a single implementation, AutoPas was successfully integrated into ls1 mardyn, providing significant speedups in certain scenarios \cite{SECKLER2021101296}.
 
