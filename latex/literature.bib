@@ -312,5 +312,18 @@
   title  = {AutoPas Fuzzy Tuning - Bachelor Thesis},
   year   = {2024},
   url    = {https://github.com/ManuelLerchner/AutoPas-FuzzyTuning-Bachelor-Thesis},
-  note   = {Accessed: 2024-11-26},
+  note   = {Accessed: 2024-11-26}
+}
+
+
+@mastersthesis{njan_master,
+  author   = {Nguyen, Jan},
+  title    = {Mixed discrete-continuous Bayesian Optimization for AutoTuning},
+  year     = {2020},
+  school   = {Technical University of Munich},
+  month    = {Oct},
+  language = {en},
+  abstract = {Molecular dynamics simulations are used to analyze physical motion at the molecular level. A numerical approach is often used, where we assume that for small time intervals, the acting force remains constant. So we calculate the trajectory of each particle step by step by repeatedly using this assumption. In each of these steps, we have to calculate the pairwise forces between all particles. Due to this, simulations with a high number of particles could take a considerable amount of time, since every particle exert forces on every other particle. However, there are many different algorithms and corresponding parameters to calculate these forces efficiently. Which combination of parameters is most effective depends on the structure of the simulation and is generally hard to predict. To avoid having to test every combination, we use Bayesian optimization, which should give us a good result with only a few tests. Since we have discrete and continuous parameters typical Bayesian optimization can only be used to a limited extent. This is why we are testing an approach where we consider discrete values using a cluster model. As a result, we were able to observe significant improvements compared to other methods. We were often able to make an optimal selection automatically. A person would need sufficient expert knowledge to make a similarly efficient choice.
+              },
+  keywords = {AutoPas, Molecular Dynamics, AutoTuning}
 }

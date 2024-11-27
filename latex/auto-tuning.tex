@@ -150,7 +150,7 @@ The next sections will provide a detailed overview of prominent tunable paramete
                 The C18 traversal pattern uses color assignments to ensure that no race conditions occur when using Newton 3. \autoref{fig_traversals} shows that the cells are colored in a regular pattern, such that no two cells of the same color share common neighbors. To ensure that forces are only applied once when using Newton 3, each cell only applies forces to cells \textit{above} and \textit{right} of it.
 
                 During the force calculation, all available threads are working on a single color, and can therefore safely apply the force obtained by Newton 3 on neighboring cells. \\
-                The color groups must be processed sequentially, resulting in 18 synchronization points. Each color can however be fully processed in parallel, still resulting in a high overall degree of parallelism ~\cite{NEWCOME2023115278}.
+                The color groups must be processed sequentially, resulting in 18 synchronization points. Each color can however be fully processed in parallel, still resulting in a high overall degree of parallelism~\cite{NEWCOME2023115278}.
             \item[C08]
                 traversal pattern is similar to the C18 traversal pattern but uses a different coloring scheme with only eight colors. This reduces the number of synchronization points, resulting in a higher degree of parallelism at the cost of more scheduling overheads~\cite{NEWCOME2023115278}.
         \end{description}
@@ -162,16 +162,32 @@ The next sections will provide a detailed overview of prominent tunable paramete
 
 \subsection{Auto-Tuning Framework}
 
-As described previously, manual selection of suitable implementations for each tunable parameter is a daunting task and would require extensive domain knowledge that is challenging to acquire and maintain under the constantly changing software and hardware landscape. To address this issue, AutoPas performs automated algorithm selection to maximize specific performance metrics, such as simulation speed or energy efficiency~\cite{Gratl2022AutoPas}. Internally AutoPas periodically initiates so-called \textit{tuning-phases} in which promising configurations are evaluated, in order to determine the best Configuration for the current simulation state~\cite{Gratl2019AutoPas}. The winning Configuration is then used until the next tuning phase is initiated.
+As described previously, manual selection of suitable implementations for each tunable parameter is a daunting task and would require extensive domain knowledge that is challenging to acquire and maintain under the constantly changing software and hardware landscape. To address this issue, AutoPas performs automated algorithm selection to maximize specific performance metrics, such as simulation speed or energy efficiency~\cite{Gratl2022AutoPas}. Internally AutoPas periodically initiates so-called \textit{tuning-phases} in which promising configurations are evaluated, in order to determine the best Configuration for the current simulation state. The winning Configuration is then used until the next tuning phase is initiated.
 
 The key to efficient tuning phases is the ability to efficiently determine promising configurations. The naive approach of evaluating all possible configurations is infeasible in practice, as many of the naively evaluated configurations turn out to be orders of magnitude slower than the best-known Configuration, thus causing a drastic increase of the total simulation time~\cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}.
 As AutoPas is developed further and new implementations are added to the algorithm library, the number of possible configurations will steadily increase, constantly exacerbating the problem of evaluating all configurations naively.
 
-AutoPas attempts to mitigate this problem by using Tuning Strategies to select promising configurations. Tuning strategies are tasked with pruning enough configurations to make the tuning phase feasible, but not too many, to avoid missing the optimal Configuration.
-Tuning strategies balance the trade-off between potentially finding a better configuration and the cost of potentially encountering worse configurations during further exploration~\cite{Newcome2023Poster}.
+AutoPas attempts to mitigate this problem by using Tuning Strategies to select promising configurations. Tuning strategies are tasked with pruning the search space of possible configurations using certain rules or heuristics. Tuning strategies try to balance the trade of between encountering new, potentially better configurations with the cost of testing suboptimal configurations~\cite{Newcome2023Poster}.
 
+The currently available tuning strategies in AutoPas are:
 
-\todo{Add some tuning strategies}
+\begin{description}[style=nextline]
+    \item[FullSearch]
+        The FullSearch strategy naively evaluates all possible configurations, thus always finding the best Configuration. As many of the possible configurations tend to be suboptimal\cite{Manuel_Lerchner_Thesis.pdf}, the FullSearch strategy often causes a considerable overhead.
+
+    \item[RandomSearch]
+        The RandomSearch strategy randomly selects configurations out of the full search space. Therefore, the RandomSearch strategy causes less overhead than the FullSearch strategy, but is less likely to actually the best Configuration.
+
+    \item[BayesianSearch]
+        The Bayesian Search strategy is similar to the RandomSearch strategy, however, it uses a Bayesian optimization algorithm to select the next configuration to evaluate based on the performance of previously evaluated configurations~\cite{njan_master}. There also exists an improvement to better account for the discrete tuning space of AutoPas called \textit{BayesianClusterSearch} in which continuos parameters are tuned seperately for each choice of the discrete parameters~\cite{njan_master}.
+
+    \item[RuleBasedTuning]
+        The RuleBasedTuning strategy uses a set of rules to discard undesirable configurations immediately. The rules are based on expert knowledge in a \textit{if-then} fashion and use aggregate statistics of simulation (called \textit{LiveInformation}) to eliminate configurations that are unlikely to be the best Configuration~\cite{endreport.pdf}.
+
+    \item[FuzzyTuning]
+        The FuzzyTuning strategy is similar to the RuleBasedTuning strategy, but uses a fuzzy logic system to evaluate the desirability of a configuration. This allows for both an interpolation and extrapolation of the rules to account for configurations that are not covered by the expert knowledge~\cite{Manuel_Lerchner_Thesis.pdf}.
+
+\end{description}
 
 \section{Benefits of AutoTuning}
 
