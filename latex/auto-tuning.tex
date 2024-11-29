@@ -199,17 +199,22 @@ AutoTuning as provided by AutoPas has demonstrated significant performance impro
 
 \section{Drawbacks of AutoTuning}
 
-Even though AutoPas is capable of performing periodic auto-tuning, it is often beneficial to just execute a single tuning phase right at the beginning of the simulation as performing additional tuning phases could cause unnecessary overhead.
+Even though AutoPas is capable of performing periodic auto-tuning, it is often beneficial to just execute a single tuning phase right at the beginning of the simulation as performing additional tuning phases could cause unnecessary overhead caused by the tuning process itself.
 
-Many scenarios, especially homogeneous ones with simple interaction models, tend to behave fairly stable over time which makes it very likely that the best Configuration found in the first tuning phase remains the best Configuration for the entire simulation.
+Many scenarios, especially homogeneous ones with simple interaction models, tend to behave fairly stable over time which makes it very likely that the best Configuration found in the first tuning phase remains the best Configuration for the entire simulation (e.g. \autoref{fig:unnecessary-tuning-phases}).
 
 Further evaluation of training data of \texttt{md-flexible} simulations obtained in \cite{lerchner2024} shows that only three out of 184 runs show any changes in the best Configuration after the first tuning phase. This indicates that all currently provided example scenarios of \texttt{md-flexible} are incapable of demonstrating the benefits of periodic re-tuning.
 
 More complex scenarios, most likely involving multiple nodes and inhomogeneous particle distributions, are necessary to fully demonstrate the benefits of periodic re-tuning. Simulating inhomogeneous scenarios using multiple nodes can cause the load to be distributed unevenly across the nodes and time steps, further increasing the potential benefits of periodically re-tuning the Configuration on each node.
 
-
-\newpage
-\newpage
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/unnecessary-tuning-phases.png}
+    \caption{
+        Time spent calculating forces per iteration in the ExplodingLiquid Scenario. Data obtained from \cite{lerchner2024}.
+    }
+    \label{fig:unnecessary-tuning-phases}
+\end{figure}
 
 
 \section{Early Stopping Optimization}
