@@ -191,6 +191,12 @@ The currently available tuning strategies in AutoPas are:
 
 \section{Benefits of AutoTuning}
 
+As there is no "silver bullet" configuration that performs optimally across all simulation states~\cite{Tchipev2020}, it is crucial to perform some form of tuning to ensure that a feasible configuration is selected for the current simulation state.
+
+AutoPas provides such a tuning framework and allows for fully automated tuning of the simulation engine without requiring any prior expert knowledge, making it accessible to a wide range of users and applications.
+
+AutoTuning as provided by AutoPas has demonstrated significant performance improvements across diverse molecular dynamics simulation scenarios, both in the standalone application aswell as in established MD engines such as ls1 mardyn and LAMMPS~\cite{SECKLER2021101296}\cite{Gratl2022AutoPas}, showing the necessity of dynamic optimization techniques in modern MD engines.
+
 \section{Drawbacks of AutoTuning}
 
 Even though AutoPas is capable of performing periodic auto-tuning, it is often beneficial to just execute a single tuning phase right at the beginning of the simulation as performing additional tuning phases could cause unnecessary overhead.
