@@ -19,9 +19,11 @@
 \usepackage{hyperref}
 \usepackage[T1]{fontenc}
 \usepackage{enumitem}
+\usepackage{multicol}
+
+\usepackage{balance}
 
 \setlength {\marginparwidth }{2cm}
-\usepackage{todonotes}
 
 \hypersetup{hidelinks}
 \newcommand{\algorithmautorefname}{Algorithm}
@@ -334,7 +336,7 @@ To evaluate the performance of the early stopping mechanism we perform a benchma
 
 \section{Comparison with Other MD Engines}
 
-Well-established MD engines such as GROMACS, LAMMPS, and ls1 mardyn have been developed over many years and achieve high performance in their respective use cases. This section provides a short overview of those engines and highlights the differences in their implementations.
+Established MD engines such as GROMACS, LAMMPS, and ls1 mardyn have been developed over many years and have been optimized to achieve high performance in their respective use cases. This section provides a short overview of those engines and highlights the differences in their implementations.
 
 \subsection{GROMACS}
 
@@ -349,10 +351,6 @@ Gromacs defaults to $M=4$ and selects $N \in \{2, 4, 8\}$ depending on the SIMD 
 LAMMPS implements a single, highly optimized variant of the Verlet List scheme. The neighbor list is stored globally inside a multiple-page data structure. Inside each page, vectors of neighboring particles $J$ for multiple particles $I$ are stored inside a contiguous memory block~\cite{THOMPSON2022108171}, efficiently loading the neighbor list into the cache.
 All particles are stored in a \textit{SoA} (Structure of Arrays) data layout~\cite{THOMPSON2022108171}.
 
-LAMMPS supports accelerator packages using either CUDA, OpenCL, ROCm/HIP or OpenMP threads, hand-optimized
-code, generically optimized code, and code using the KOKKOS library~\cite{Seckler2021}.
-
-
 \subsection{ls1 mardyn}
 
 ls1 mardyn differs from the previously mentioned MD engines as it uses the Linked Cells algorithm for particle interactions. Using LinkedCells provides a better memory efficiency than GROMACS and LAMMPS, allowing for simulations of massive particle systems~\cite{tchipev2019twe}. Internally, ls1 mardyn uses the default data layout of \textit{AoS} (Array of Structures) for the particle data. However, particular branches aimed at simulating massive particle systems can use a \texttt{RMM} (Reduced Memory Mode) layout in combination with a \textit{SoA} (Structure of Arrays) data layout, allowing for simulations of up to twenty trillion atoms~\cite{tchipev2019twe}.
@@ -362,19 +360,16 @@ To overcome the limitations of a single implementation, AutoPas was successfully
 
 \section{Conclusion}
 
-We conclude that a naive implementation of the early stopping mechanism already provides a valuable addition to the AutoPas framework, as it can drastically reduce the total simulation time for certain scenarios, without causing significant overhead.
 
-\todo{conclusion}
+We have presented an overview of the AutoPas framework and its auto-tuning capabilities, demonstrating the benefits and challenges of dynamic auto-tuning in molecular dynamics simulations. Moreover, we investigated the potential of a naive early stopping mechanism to reduce some of the inherent overhead caused by tuning phases. Early measurements show that the early stopping mechanism can provide a reduction of the total simulation time of up to 18.9\% when using the PredictiveTuning strategy without causing additional overhead.
 
+The comparison with established MD engines such as GROMACS, LAMMPS, and ls1 mardyn reveals a fundamental trade-off in software design: while these engines achieve excellent performance through highly specialized implementations, AutoPas offers greater flexibility and adaptability through its modular architecture and dynamic optimization capabilities. The success of AutoPas's integration into ls1 mardyn and LAMMPS demonstrates that these approaches can be complementary rather than mutually exclusive.
+
+\newpage
 
 \bibliographystyle{IEEEtran}
 \bibliography{literature}
 
-
-
-\newpage
-\newpage
-\tableofcontents
 
 \end{document}
 
