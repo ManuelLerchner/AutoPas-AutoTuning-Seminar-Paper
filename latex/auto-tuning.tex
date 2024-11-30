@@ -189,59 +189,67 @@ The currently available tuning strategies in AutoPas are:
 
 \end{description}
 
-\section{Benefits of AutoTuning}
+\section{Benefits of Auto-Tuning}
 
-As there is no "silver bullet" configuration that performs optimally across all simulation states~\cite{Tchipev2020}, it is crucial to perform some form of tuning to ensure that a feasible configuration is selected for the current simulation state.
+Since no single configuration can deliver optimal performance across all simulation scenarios~\cite{Tchipev2020}, performance tuning is essential for maintaining high efficiency across diverse simulation conditions. The auto-tuning approach implemented in AutoPas offers some key advantages:
 
-AutoPas provides such a tuning framework and allows for fully automated tuning of the simulation engine without requiring any prior expert knowledge, making it accessible to a wide range of users and applications.
+\subsection*{Performance Improvements}
 
-AutoTuning as provided by AutoPas has demonstrated significant performance improvements across diverse molecular dynamics simulation scenarios, both in the standalone application aswell as in established MD engines such as ls1 mardyn and LAMMPS~\cite{SECKLER2021101296}\cite{Gratl2022AutoPas}, showing the necessity of dynamic optimization techniques in modern MD engines.
+The most compelling advantage of auto-tuning is the significant performance improvements it can achieve. It has been shown many times that AutoPas can provide significant performance improvements across diverse molecular dynamics simulation scenarios, both in the standalone application aswell as in established MD engines such as ls1 mardyn and LAMMPS~\cite{SECKLER2021101296}\cite{Gratl2022AutoPas}, thereby providing compelling evidence for the effectiveness and importance of this approach.
+
+\subsection*{Accessibility and Ease of Use}
+AutoPas's tuning framework enables scientists to achieve optimal performance directly out of the box, without requiring deep expertise in performance optimization or parallel computing, which represents a significant advantage for the molecular dynamics community where researchers often need to focus on their scientific objectives rather than computational intricacies. This inherent user-friendliness is particularly valuable when integrating AutoPas into other simulation frameworks, as developers can leverage its sophisticated auto-tuning capabilities while maintaining a straightforward implementation path that minimizes the complexity traditionally associated with performance optimization in high-performance computing environments.
 
 \section{Drawbacks of AutoTuning}
 
-Even though AutoPas is capable of performing periodic auto-tuning, it is often beneficial to just execute a single tuning phase right at the beginning of the simulation as performing additional tuning phases could cause unnecessary overhead caused by the tuning process itself.
+\subsection*{Suboptimal Configurations}
 
-Many scenarios, especially homogeneous ones with simple interaction models, tend to behave fairly stable over time which makes it very likely that the best Configuration found in the first tuning phase remains the best Configuration for the entire simulation (e.g. \autoref{fig:unnecessary-tuning-phases}).
+A major drawback of auto-tuning in the way it is implemented in AutoPas is the inherent overhead caused by tuning phases. As the tuning process requires evaluating many configurations, the overhead of evaluating many suboptimal configurations quickly adds up. This is especially problematic as the performance of different configurations can span several orders of magnitude~\cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}, quickly leading to noticeable increases in the total simulation time.
 
-Further evaluation of training data of \texttt{md-flexible} simulations obtained in \cite{lerchner2024} shows that only three out of 184 runs show any changes in the best Configuration after the first tuning phase. This indicates that all currently provided example scenarios of \texttt{md-flexible} are incapable of demonstrating the benefits of periodic re-tuning.
+Even though the tuning strategies employed by AutoPas are highly efficient, they still sometimes suggest suboptimal configurations. Rule-driven tuning strategies such as \textit{RuleBasedTuning} and \textit{FuzzyTuning} can mitigate this problem to some extent by making use of expert knowledge, however even they can not guarantee to find the best configuration in all cases, as the underlying expert knowledge is expected to be highly incomplete.
 
-More complex scenarios, most likely involving multiple nodes and inhomogeneous particle distributions, are necessary to fully demonstrate the benefits of periodic re-tuning. Simulating inhomogeneous scenarios using multiple nodes can cause the load to be distributed unevenly across the nodes and time steps, further increasing the potential benefits of periodically re-tuning the Configuration on each node.
+Consequently, there will always be some overhead caused by performing tuning phases.
 
-\begin{figure}[H]
+\subsection*{Periodic Re-Tuning}
+
+Even though AutoPas is capable of performing periodic auto-tuning, it is often beneficial to just execute a single tuning phase right at the beginning of the simulation.
+
+Ideally the beforementioned overhead of evaluating suboptimal configurations leads to discovering a better configuration than the current one. However, many scenarios, especially homogeneous ones with simple interaction models, tend to behave fairly stable over time making it very likely that re-tuning does not lead to a refined configuration. \autoref{fig:unnecessary-tuning-phases} shows this effect for the ExplodingLiquid scenario provided by the \texttt{md-flexible} framework.
+
+Further evaluation of \texttt{md-flexible} data obtained in \cite{lerchner2024} using the provided example scenarios shows that only three out of 184 run show any changes in the best Configuration after the first tuning phase. This indicates that all currently provided example scenarios of \texttt{md-flexible} are incapable of demonstrating the benefits of periodic re-tuning and that additional tuning phases are mostly causing unnecessary overhead.
+
+To fully demonstrate the benefits of periodic re-tuning, more complex scenarios, most likely involving multiple MPI ranks and inhomogeneous particle distributions, are necessary. Simulating inhomogeneous scenarios in an MPI environment can cause the load to be distributed unevenly across both MPI ranks and time steps, further increasing the potential benefits of performing periodical re-tuning on each rank (See \cite{Newcome2023Poster}).
+
+\begin{figure}[h]
     \centering
     \includegraphics[width=\columnwidth]{figures/unnecessary-tuning-phases.png}
     \caption{
-        Time spent calculating forces per iteration in the ExplodingLiquid Scenario. Data obtained from \cite{lerchner2024}.
+        Time spent calculating forces per iteration in the ExplodingLiquid Scenario. There exists a considerable overhead in the total simulation time caused by tuning phases. As the simulation is stable over time, the overhead of re-tuning is unnecessary. (Data obtained from \cite{lerchner2024})
     }
     \label{fig:unnecessary-tuning-phases}
 \end{figure}
 
+\newpage
 
 \section{Early Stopping Optimization}
 
-As identified by~\cite{autopas_issue673}\cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}, overhead caused by evaluating suboptimal configurations during the tuning phase can be a significant bottleneck in the performance of the AutoPas framework. Even though the tuning strategies employed by AutoPas are highly efficient, they still sometimes suggest suboptimal configurations. Rule-driven tuning strategies such as \textit{RuleBasedTuning} and \textit{FuzzyTuning} can mitigate this problem to some extent, but due to the complexity of particle simulations, those rule bases are expected to be highly incomplete.
+To minimize some of the introduced drawbacks of the auto-tuning process, \cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}\cite{autopas_issue673} suggest that an \textit{early stopping} mechanism could be beneficial for the AutoPas framework. The primary goal of such a mechanism would be to detect tuning iterations that take much longer than the currently best-known configuration and stop the evaluation of those configurations early. There are two approaches to this problem:
 
-All mentioned sources suggest that some form of \textit{early stopping} mechanism could benefit the AutoPas framework. The primary goal of such a mechanism would be to detect tuning iterations that take much longer than the currently best-known Configuration and stop the evaluation of those configurations early. There are two approaches to this problem:
 
 \begin{itemize}
     \item \textbf{Stopping Further Samples}\\
-          AutoPas supports testing a certain configuration multiple times to account for the inherent noise in performance measurements. A simple way to implement early stopping would be to stop the evaluation of further samples of a configuration as soon as it is clear that the performance is significantly worse than the best-known Configuration.
+          As AutoPas evaluates a configuration multiple times to reduce measurement noise, a simple way to implement early stopping would be to stop the evaluation of further samples as soon as it is clear that the performance is significantly worse than the best-known configuration.
 
-          The implementation of this approach is relatively simple, but may not be as effective as the second approach, as it still requires fully evaluating the first sample of a bad configuration.
+          This approach may not be as effective as it still requires fully evaluating the first sample of a bad configuration.
     \item \textbf{Interrupting the Evaluation}\\
-          A more fine-grained approach, proposed in~\cite{endreport.pdf} could interrupt the evaluation of a long running configuration during its execution.
+          A more fine-grained approach, proposed in~\cite{endreport.pdf} could interrupt the evaluation of a long running configuration while it is still being evaluated.
 
-          The Implementation of this approach requires a big rewrite of the current AutoPas framework, and would require the user to implement synchronizations between multiple nodes in an MPI environment.
+          The Implementation of this approach would require a big rewrite of AutoPas' internal structure, and is therefore not feasible in the short term.
 \end{itemize}
 
 To get a first impression of the potential benefits of an early stopping mechanism, we implemented the first approach into the AutoPas framework. The changes to the existing codebase are minimal, as the early-stopping mechanism can be implemented using existing functionality. \autoref{alg_early_stopping} shows the main changes to the \texttt{AutoTuner.cpp} file.
 
-Both described approaches require a user-defined threshold for the maximum allowed slowdown of a configuration before it should be stopped. As finding optimal thresholds is a non-trivial task and may depend on the simulation scenario and the tuning strategy, suitable thresholds will be determined empirically in \autoref{sec:evaluation}.
-
-\subsection{Implementation}
-The early stopping mechanism is triggered by the new \texttt{evaluateConfiguration} function, which is called after the performance of a configuration has been measured. The function compares the performance of the current Configuration to the best-known performance encountered so far. If the performance of the current Configuration is significantly worse than the best-known performance, the \texttt{abort} flag is set to true, causing the \texttt{GetNextConfiguration} function to select a new configuration on the next call.
-
-\begin{algorithm}[H]
+\begin{algorithm}[h]
     \small
     \caption{Early Stopping Algorithm in AutoPas}
     \label{alg_early_stopping}
@@ -270,46 +278,38 @@ The early stopping mechanism is triggered by the new \texttt{evaluateConfigurati
 
 \end{algorithm}
 
+Both described approaches require a user-defined threshold for the maximum allowed slowdown of a configuration before it should be stopped. As finding optimal thresholds is non-trivial and may depend on the simulation scenario and the tuning strategy, suitable thresholds will be determined empirically in the following section.
 
 
 \subsection{Evaluation: Exploding Liquid Simulation}
-\label{sec:evaluation}
 
-To evaluate the performance of the early stopping mechanism and to determine suitable thresholds for the maximum allowed slowdown, we perform a benchmark using the \textit{Exploding Liquid} scenario provided by the \texttt{md-flexible} framework. The simulation consists of 1764 initially close-packed particles that are simulated with a Lennard-Jones potential. During the simulation, the particles rapidly expand outwards and eventually hit the simulation boundaries\footnote{A simulation video can be found at \url{https://youtu.be/u7TE5KiSQ08}}.
+To evaluate the performance of the early stopping mechanism we perform a benchmark using the \textit{Exploding Liquid} scenario provided by the \texttt{md-flexible} framework. The simulation consists of 1764 initially close-packed particles which rapidly expand outwards and eventually hit the simulation boundaries. All benchmarks are performed on a single node of the \href{https://doku.lrz.de/coolmuc-2-11484376.html}{CoolMUC2} supercomputer using 14 threads. To ensure reproducibility, all runs are repeated three times.
 
-All benchmarks are performed on a single node of the CoolMUC2\footnote{CoolMUC-2 is a supercomputer at the Leibniz Supercomputing Centre in Garching, Germany. See: https://doku.lrz.de/coolmuc-2-11484376.html} supercomputer using 14 threads. To ensure reproducibility, all runs are repeated three times.
-
-\subsubsection{Full Search}
-
-The resulting performance when using the FullSearch strategy in combination with the early stopping mechanism is shown in \autoref{fig:full_search}.
+\begin{description}[style=nextline]
+    \item[Full Search]
+        When using Early Stopping together with the FullSearch tuning strategy the total simulation time
+        can be reduced from 36.22 seconds to 30.84 seconds, at a maximum allowed slowdown factor of $\approx4$. This results in a reduction of the total simulation time by 14.8\% (\autoref{fig:full_search}).
+    \item[Predictive Tuning]
+        When using Early Stopping together with the PredictiveTuning strategy the total simulation time can be reduced from 28.62 seconds to 23.23 seconds, at a maximum allowed slowdown factor of $\approx5$. This results in a reduction of the total simulation time by 18.9\% (\autoref{fig:predictive_tuning}).
+\end{description}
 
 \begin{figure}[H]
     \centering
 
     \includegraphics[width=\columnwidth]{../data/explodingLiquid/cluster/fullSearch/analytics/total_time_average.png}
 
-    \caption{Total Simulation Time for Exploding Liquid Simulation with Early Stopping divided into tuning and simulation phases.}
+    \caption{Total Simulation Time for Exploding Liquid Simulation with Early Stopping using FullSearch divided into tuning and simulation phases.}
     \label{fig:full_search}
 \end{figure}
-
-
-The total simulation time is minimal at a maximum allowed slowdown factor of $\approx4$ with a total simulation time of 30.84 seconds compared to 36.22 seconds without the early stopping mechanism. This is a reduction of 14.8\% in the total simulation time.
-
-\subsubsection{Predictive Tuning}
-
-The resulting performance when using the Predictive Tuning strategy in combination with the early stopping mechanism is shown in \autoref{fig:predictive_tuning}.
 
 \begin{figure}[H]
     \centering
 
     \includegraphics[width=\columnwidth]{../data/explodingLiquid/cluster/predictiveTuning/analytics/total_time_average.png}
 
-    \caption{Total Simulation Time for Exploding Liquid Simulation with Early Stopping divided into tuning and simulation phases.}
+    \caption{Total Simulation Time for Exploding Liquid Simulation with Early Stopping using PredictiveTuning divided into tuning and simulation phases.}
     \label{fig:predictive_tuning}
 \end{figure}
-
-
-The total simulation time is minimal at a maximum allowed slowdown factor of $\approx5$ with a total simulation time of 23.23 seconds compared to 28.62 seconds without the early stopping mechanism. This is a reduction of 18.9\% in the total simulation time.
 
 \subsection{Analysis and Discussion}
 
