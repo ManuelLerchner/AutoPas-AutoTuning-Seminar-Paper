@@ -77,17 +77,17 @@
 
 Molecular dynamics simulations represent a computational cornerstone in various scientific fields. These simulations typically use complex and computationally intensive interaction models acting on enormous numbers of particles to ensure accurate results. Consequently, the computational requirements for these simulations can be substantial and require highly optimized algorithms and frameworks to achieve feasible performance.
 
-Well established molecular dynamics engines, such as GROMACS, LAMMPS, and ls1 mardyn solve this challenge by providing a single, highly optimized implementation determined prior to the start of the simulation. As their implementation is detirmend statically, these engines must rely on static optimizations to improve their performance. Static optimizations are selected based on predefined performance models and are often fine-tuned for specific hardware architectures. Common static optimizations techniques include automatic optimizations performed by modern compilers (e.g., loop unrolling, inlining, auto-vectorization), conditional compilation based on the target hardware (e.g. SIMD), or manual selection of simulation parameters based on expert knowledge~\cite{Gratl2019AutoPas}.
+Well established molecular dynamics engines, such as GROMACS, LAMMPS, and ls1 mardyn solve this challenge by providing a single, highly optimized implementation determined prior to the start of the simulation. As their implementation is detirmend statically, these engines must rely on static optimizations to improve their performance. Static optimizations are typically selected based on predefined performance models and must be fine-tuned for specific hardware architectures. Common static optimizations techniques include automatic optimizations performed by modern compilers (e.g., loop unrolling, inlining, auto-vectorization), conditional compilation based on the target hardware (e.g. SIMD), or manual selection of simulation parameters based on expert knowledge~\cite{Gratl2019AutoPas}.
 
-AutoPas, approaches the challenge of high-performance molecular dynamics simulations differently: AutoPas heavily relies on dynamic optimizations and is able to adjust its implementation based on the current simulation state and the actual hardware performance. This approach is favourable, as the engine can adapt and optimize itself without external intervention. However, dynamic optimizations come at the cost of increased complexity and potential overhead due to the need for frequent re-evaluations of the simulation state.
+AutoPas, approaches the challenge of high-performance molecular dynamics simulations differently: Instead of choosing a single implementation prior to the simulation, AutoPas uses on dynamic optimizations to adjust its implementation based on the simulation state and the actual hardware performance. This approach is favourable, as the engine can adapt and optimize itself without external intervention. However, dynamic optimizations come at the cost of increased complexity and potential overhead due to the need for frequent re-evaluations of the simulation state.
 
-This paper provides an overview of the AutoPas framework, its auto-tuning capabilities, and the benefits and challenges of using dynamic auto-tuning in molecular dynamics simulations. We compare AutoPas with other prominent MD engines, such as GROMACS, LAMMPS, and ls1 mardyn, and investigate a possible improvement to AutoPas' auto-tuning capabilities by introducing an early stopping mechanism aiming to reduce the overhead of parameter space exploration.
+This paper provides an overview of the AutoPas framework and the benefits and challenges of using dynamic auto-tuning in molecular dynamics simulations. We compare AutoPas with other prominent MD engines, such as GROMACS, LAMMPS, and ls1 mardyn, and investigate a possible improvement to AutoPas' auto-tuning capabilities by introducing an early stopping mechanism aiming to reduce the overhead of parameter space exploration.
 
 \section{AutoPas}
 
-AutoPas was developed on the basis of creating an efficient particle / N-Body simulation engine applicable to a wide range of scientific fields~\cite{Tchipev2020}. AutoPas employs a flexible architecture ensuring that algorithms and data structures can be interchanged seamlessly within the simulation engine. As it is not capable of running simulations on its own, AutoPas serves as an intermediary layer between user-provided simulation code and implementations in its algorithm library, specificly designed to efficiently solve N-Body problems. The modular nature of AutoPas enables it to support more than a single \textit{configuration}.
+AutoPas was developed on the basis of creating an efficient particle / N-Body simulation engine applicable to a wide range of scientific fields~\cite{Tchipev2020}. AutoPas employs a flexible architecture ensuring that algorithms and data structures can be interchanged seamlessly within the simulation engine. As it is not capable of running simulations on its own, AutoPas serves as an intermediary layer between user-provided simulation code and implementations specificly designed to efficiently solve N-Body problems. The modular nature of AutoPas enables it to combine different implementations and create a wide range of so-called \textit{configurations}.
 
-To eliminate the need for manual configuration selection and enable dynamic optimization, AutoPas provides an auto-tuning framework. This framework periodically assesses different configurations and selects optimal ones based on performance metrics. This selection process is managed by \textit{TuningStrategies} that systematically reduce the configuration search space according to a certain strategy. \autoref{fig_architecture} illustrates the high-level architecture of the AutoPas library.
+To eliminate the need for manual configuration selection and enable dynamic optimization, AutoPas provides an auto-tuning framework. This framework periodically assesses different configurations and selects optimal ones based on performance metrics. This selection process is managed by \textit{TuningStrategies} that systematically suggest promising configurations to evaluate. \autoref{fig_architecture} illustrates the high-level architecture of the AutoPas library.
 
 \begin{figure}[H]
     \centering
@@ -98,64 +98,61 @@ To eliminate the need for manual configuration selection and enable dynamic opti
 
 \subsection{Algorithm Library}
 
-All different algorithmic implementations for solving N-Body problems are part of the so-called \textit{Algorithm Library} of AutoPas. The Algorithm Library contains different implementations for certain key aspects of the simulation, such as neighbor identification, traversal patterns, memory layouts and optimization techniques.
+All different algorithmic implementations for solving N-Body problems are part of the so-called \textit{Algorithm Library} of AutoPas. The Algorithm Library contains different implementations for certain key aspects of the simulation, such as neighbor identification, traversal patterns, memory layouts and optimization techniques. Currently AutoPas supports the six tunable parameters: \textit{Container}, \textit{Data Layout}, \textit{Newton 3}, \textit{Traversal}, \textit{Load Estimator} and \textit{Cell Size Factor} which combine to form a configuration.
 
-A combination of different implementations for each key aspect of the simulation is called a \textit{configuration}. Currently AutoPas supports the six tunable parameters: \textit{Container}, \textit{Data Layout}, \textit{Newton 3}, \textit{Traversal}, \textit{Load Estimator} and \textit{Cell Size Factor}.
-
-Maintaining a library of different implementations is very beneficial for researchers and developers. The modular nature of AutoPas allows for an easy extension of the algorithm library with new, potentially hardware-specific, implementations for each key aspect of the simulation.
-The big search space of possible configurations associated with the algorithm library allows for a high degree of flexibility and provides performance portability across different hardware platforms~\cite{Tchipev2020}. Another benefit of this modular approach is presented with the implicit backward compatibility of the interchangable implementations. With the ever growing number of configurations, it is possible to test the feasibility of older implementations under new hardware~\cite{Tchipev2020}.
+Maintaining a library of different implementations has several benefits: As the library is modular, it is straightforward to add new, potentially hardware-specific, implementations for each key aspect of the simulation. This ensures that the simulation engine remains maintanable and can provide performance portability across a wide range of hardware platforms~\cite{Tchipev2020}. The interchangable nature of the implementations also ensures an implicit backward compatibility, making it easy to study effects of new hardware on existing implementations~\cite{Tchipev2020}. Users of the library also benefit from this approach. As AutoPas is able to automatically select the best configuration for their specific use case and hardware setup, users do not need to have a deep understanding of the underlying hardware or software optimizations. By  treating the simulation engine as a black box, users can focus on the high-level aspects of their simulation.
 
 \subsection{Tunable Parameters}
 
+This section provides a brief overview of the six tunable parameters available in AutoPas.
+
 \begin{description}[style=nextline]
     \item[Container]
-
-        Containers are responsible for storing the particles of the simulation such that relevant neighbor particles can be determined efficiently. As AutoPas focuses on short-range interactions with
-        a force cutoff radius $r_c$, efficient neighbor identification using just $O(N)$ distance calculations is possible~\cite{Gratl2019AutoPas}. The important container types depicted in \autoref{fig_containers} will be shortly described below.
+        Containers are responsible for storing the particles of the simulation such that relevant neighbor particles can be determined efficiently. As AutoPas focuses on short-range interactions with a force cutoff radius $r_c$, efficient neighbor identifications using just $O(N)$ distance calculations are possible~\cite{Gratl2019AutoPas}. The container types depicted in \autoref{fig_containers} will be shortly described below.
 
         \begin{description}[style=nextline, font=\itshape]
             \item[$\bullet$ Linked Cells]
-                The Linked Cells algorithm maintains a grid of cells with a length of $r_c$ (when $cellSizeFactor = 1$). When calculating forces for a particle, only particles in neighboring cells (depicted in blue) need to be considered, as all other particles are guaranteed to be outside the cutoff radius.
+                The Linked Cells algorithm maintains a grid of cells, each storing a list of particles located within the cell. When calculating forces for a particle, only particles in neighboring cells (depicted in blue) need to be considered, as all other particles are guaranteed to be outside the cutoff radius.
 
-                LinkedCell casues many spurious distance calculations (shown by many arrows to gray particles in the figure). As particles for a cell can be stored together in memory, LinkedCells are however very cache-friendly~\cite{Gratl2022AutoPas}.
+                LinkedCells introduces many spurious distance calculations (shown by many arrows to gray particles in the figure) which can be reduced by using a smaller cell size factor. LinkedCells are very cache-friendly as spatially close particles are stored together in memory~\cite{Gratl2022AutoPas}.
 
             \item[$\bullet$ Verlet Lists]
-                The Verlet List algorithm uses a second radius $r_v = {r_c} + \Delta_s$ (yellow circle) and considers all particles within this radius as potential neighbors. Contrary to LinkedCells, each particle maintains its own list of potential neighbors. As the bigger radius $r_v$ provides a buffer region, it is possible to only rebuild the neighbor-list every $n$ simulation steps, as long as no particle can move from outside $r_c + \Delta_s$ to inside $r_c$ unnoticed~\cite{NEWCOME2023115278}.
+                The Verlet Lists algorithm uses a second radius $r_v = {r_c} + \Delta_s$ (yellow circle) and considers all particles within this radius as potential neighbors. Contrary to LinkedCells, each particle maintains its own list of potential neighbors resulting in a way higher memory overhead.
+                As the bigger radius $r_v$ provides a buffer region, it is possible to only rebuild the neighbor-list every $n$ simulation steps, as long as no particle can move from outside $r_c + \Delta_s$ to inside $r_c$ unnoticed~\cite{NEWCOME2023115278}.
 
-                VerletLists have very few spurious distance calculations but result in far higher memory consumptions and are less cache-friendly~\cite{Gratl2022AutoPas}, resulting in inefficient vectorization~\cite{PALL20132641}.
+                VerletLists have very few spurious distance calculations but result are less cache-friendly as neighboring particles are not stored together in memory~\cite{Gratl2022AutoPas}. This results in very inefficient vectorization~\cite{PALL20132641}.
 
             \item[$\bullet$ Verlet Cluster Lists]
-                The Verlet Cluster Lists algorithm improves on the VerletList algorithm by grouping particles into clusters of size $M$ ($M=4$ in the figure). Maintaining the neighbor list and keeping track of buffer regions is done on a cluster level, reducing the memory overhead of the VerletList algorithm.
-
-                As all particles in overlapping clusters need to be considered for the force calculation, the number of spurious distance calculations increases again. When $M$ is chosen in accordance with the SIMD width of the system, efficient vectorization is possible~\cite{Gratl2022AutoPas}.
+                The Verlet Cluster Lists algorithm improves on the VerletLists algorithm by grouping particles into clusters of size $M$ ($M=4$ in the figure) and perforing neighbor-list calculations on a cluster level. This reduces the memory overhead significantly, however results in more spurious distance calculations as all particles in neighboring clusters need to be considered when calculating forces. When $M$ is chosen in accordance with the SIMD width of the system, efficient vectorization is possible~\cite{Gratl2022AutoPas}.
         \end{description}
 
         \begin{figure}[h]
             \centering
             \includegraphics[width=\columnwidth]{figures/containers.jpg}
-            \caption{Important Container Types as depited by~\cite{Gratl2022AutoPas}. The cutoff radius $r_c$ is shown using a red circle. The arrows represent distance checks between particles. Only particles shown in blue contribute to the final force calculation.}
+            \caption{Important container types as depited by~\cite{Gratl2022AutoPas}. The cutoff radius $r_c$ is shown using a red circle. The arrows represent distance checks between particles. Only particles shown in blue contribute to the final force calculation.}
             \label{fig_containers}
         \end{figure}
 
     \item[Data Layout]
-        The Data Layout describes how the particle data is stored in memory. Possible choices are \textit{SoA} (Structure of Arrays) and \textit{AoS} (Array of Structures). \textit{SoA} allows for better vectorization. However, it causes information about a single particle to be spread across multiple memory locations. \textit{AoS} layout stores all information about a single particle together but prohibits efficient vectorization as filling vector registers requires gathering data from multiple memory locations.
+        The Data Layout describes how the particle data is stored in memory. Possible choices are \textit{SoA} (Structure of Arrays) and \textit{AoS} (Array of Structures). \textit{SoA} allows for better vectorization as properties of multiple particles can be loaded efficiently into SIMD registers. Accesing properties of a single particle is however more expensive as it requires multiple memory accesses. \textit{AoS} is the opposite, allowing for efficient access to properties of a single particle to e.g. send it to another MPI rank, but results in inefficient vectorization~\cite{Gratl2022AutoPas}.
 
     \item[Newton 3]
-        Applying Newton's third law to the force calculations allows for a reduction of the number of force calculations by half, as the calculated force between two particles can be reused for the second particle. The optimization can be enabled or disabled in accordance with the interaction model and the traversal pattern.
+        A common optimization in molecular dynamics simulations is the application of Newton's third law, which allows reusing force calculations between two particles, reducing the number of force calculations by a factor of two. As Newton 3 can cause race conditions in parallel environments, not all traversal patterns support this optimization. The optimization can be enabled or disabled in accordance with the traversal pattern and the interaction model.
 
     \item[Traversal]
         Traversals are responsible for iterating over the particles in the simulation and calculating their interactions in a shared-memory environment~\cite{SECKLER2021101296}. The traversal pattern determines to which extent force calculations can be parallelized and whether optimizations, such as Newton 3, can be applied. The traversal patterns depicted in \autoref{fig_traversals} will again be shortly introduced below.
 
         \begin{description}[style=nextline, font=\itshape\mdseries]
             \item[$\bullet$ C01]
-                The C01 traversal pattern processes each cell independently, resulting in an embarrassingly parallel traversal pattern. Newton 3 can not be used in this traversal pattern, as neighboring cells can be processed in parallel, which could result in race conditions. No synchronization between cells is required, resulting in a high degree of parallelism.
+                The C01 traversal pattern processes each cell independently, resulting in an embarrassingly parallel traversal pattern. Newton 3 can not be used in this traversal pattern, as neighboring cells can be processed in parallel, which could result in race conditions when applying forces. As no synchronization between cells is required, the C01 traversal pattern has the highest degree of parallelism.
             \item[$\bullet$ C18]
-                The C18 traversal pattern uses color assignments to ensure that no race conditions occur when using Newton 3. \autoref{fig_traversals} shows that the cells are colored in a regular pattern, such that no two cells of the same color share common neighbors. To ensure that forces are only applied once when using Newton 3, each cell only applies forces to cells \textit{above} and \textit{right} of it.
+                The C18 traversal pattern uses color assignments to ensure that no race conditions occur when using Newton 3. \autoref{fig_traversals} shows the regular color assignments, ensuring that no two cells of the same color share common neighbors. To ensure that forces are only applied once when using Newton 3, each cell only applies forces to cells \textit{above} or \textit{right} of it.
 
-                During the force calculation, all available threads are working on a single color, and can therefore safely apply forces on neighboring cells. \\
-                The color groups must be processed sequentially, resulting in 18 synchronization points. Each color can however be fully processed in parallel, still resulting in a high overall degree of parallelism~\cite{NEWCOME2023115278}.
+                During the force calculation, all available threads work on a single color, and can therefore safely apply forces on neighboring cells.\\
+                As the color groups must be processed sequentially, the C18 traversal introduces 18 synchronization points, which reduces the overall degree of parallelism\cite{NEWCOME2023115278}.
+
             \item[$\bullet$ C08]
-                traversal pattern is similar to the C18 traversal pattern but uses a different coloring scheme with only eight colors. This reduces the number of synchronization points, resulting in a higher degree of parallelism at the cost of more scheduling overheads~\cite{NEWCOME2023115278}.
+                The C08 traversal pattern is similar to the C18 traversal pattern but uses a different coloring scheme with only eight colors, reducing the number of synchronization points to eight. The C08 traversal pattern has a degree of parallelism between the C01 and C18 traversal patterns~\cite{NEWCOME2023115278}.
         \end{description}
 
         \begin{figure}[H]
@@ -166,21 +163,20 @@ The big search space of possible configurations associated with the algorithm li
         \end{figure}
 
     \item[Load Estimator]
-        To ensure an even distribution of work across all available processing units in a distributed-memory environment, different load estimators can be used. A good workload distribution reduces the idle time of processing units and thus increases the overall performance of the simulation.
+        To ensure an even distribution of work across all available processing units in a distributed-memory environment, different load estimators can be used. A good workload distribution reduces the idle time of processing units which reduces the total simulation time.
 
     \item[Cell Size Factor]
-        The default cell size factor of 1 results in a cell size of $r_c$ (see \autoref{fig_containers}). As discussed previously, the large area of neighboring cells causes many spurious distance calculations. By reducing the cell size factor, the number of spurious distance calculations can be reduced, at the cost of having to maintain more cells in memory\cite{Papula2020}. A balance between the number of spurious distance calculations and the memory overhead must be found in order to achieve optimal performance.
+        The default cell size factor of 1 results in a cell size of $r_c$ (see \autoref{fig_containers}). As discussed previously, the large area of neighboring cells causes many spurious distance calculations, which can be reduced by using a smaller cell size factor. As decreasing the cell size factor also increases the memory overhead due to the higher number of cells to be maintained in memory\cite{Papula2020}, the cell size factor should be chosen carefully.
 \end{description}
 
 
 \subsection{Auto-Tuning Framework}
 
-As described previously, manual selection of suitable implementations for each tunable parameter is a daunting task and would require extensive domain knowledge that is challenging to acquire and maintain under the constantly changing software and hardware landscape. To address this issue, AutoPas performs automated algorithm selection to maximize specific performance metrics, such as simulation speed or energy efficiency~\cite{Gratl2022AutoPas}. Internally AutoPas periodically initiates so-called \textit{tuning-phases} in which promising configurations are evaluated, in order to determine the best Configuration for the current simulation state. The winning Configuration is then used until the next tuning phase is initiated.
+Manual selection of suitable implementations for each tunable parameter would require extensive domain knowledge that is challenging to acquire and maintain under the constantly changing software and hardware landscape. To address this issue, AutoPas performs automated algorithm selection to optimize specific performance metrics, such as simulation speed or energy efficiency~\cite{Gratl2022AutoPas}. Internally AutoPas periodically initiates so-called \textit{tuning-phases} in which promising configurations are evaluated, in order to determine the best Configuration for the current simulation state. The winning Configuration is then used until the next tuning phase is initiated.
 
-The key to efficient tuning phases is the ability to efficiently determine promising configurations. The naive approach of evaluating all possible configurations is infeasible in practice, as many of the naively evaluated configurations turn out to be orders of magnitude slower than the best-known Configuration, thus causing a drastic increase of the total simulation time~\cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}.
-As AutoPas is developed further and new implementations are added to the algorithm library, the number of possible configurations will steadily increase, constantly exacerbating the problem of evaluating all configurations naively.
+The key to efficient tuning phases is the ability to efficiently determine promising configurations. The naive approach of evaluating all possible configurations is infeasible in practice, as many configurations turn out to be orders of magnitude slower than the optimal configuration~\cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}.
 
-AutoPas attempts to mitigate this problem by using Tuning Strategies to select promising configurations. Tuning strategies are tasked with pruning the search space of possible configurations using certain rules or heuristics. Tuning strategies try to balance the trade of between encountering new, potentially better configurations with the cost of testing suboptimal configurations~\cite{Newcome2023Poster}.
+AutoPas attempts to mitigate this problem by using Tuning Strategies to only evaluate promising configurations. Tuning strategies are tasked with reducing the search space of possible configurations using certain rules or heuristics.
 
 The currently available tuning strategies in AutoPas are:
 
@@ -189,19 +185,19 @@ The currently available tuning strategies in AutoPas are:
         The FullSearch strategy naively evaluates all possible configurations, thus always finding the best Configuration. As many of the possible configurations tend to be suboptimal\cite{Manuel_Lerchner_Thesis.pdf}, the FullSearch strategy often causes a considerable overhead.
 
     \item[RandomSearch]
-        The RandomSearch strategy randomly selects configurations out of the full search space. Therefore, the RandomSearch strategy causes less overhead than the FullSearch strategy, but is less likely to actually the best Configuration.
+        The RandomSearch strategy randomly selects configurations out of the full search space, causing less overhead than the FullSearch strategy at the cost of potentially missing the best Configuration.
 
     \item[BayesianSearch]
-        The Bayesian Search strategy is similar to the RandomSearch strategy, however, it uses a Bayesian optimization algorithm to select the next configuration to evaluate based on the performance of previously evaluated configurations~\cite{njan_master}. There also exists an improvement to account for the discrete tuning space of AutoPas called \textit{BayesianClusterSearch}~\cite{njan_master}.
+        The Bayesian Search strategy is similar to the RandomSearch strategy, however, it uses a Bayesian optimization algorithm to select the next configuration to evaluate based on previous measurements~\cite{njan_master}. An improvement to better account for the discrete tuning space of AutoPas called \textit{BayesianClusterSearch} is also available~\cite{autopas_issue673}.
 
     \item[PredictiveTuning]
-        The PredictiveTuning strategy extrapolates a previously gathered measurement of a container to predict the performance in the current simulation state.
+        The PredictiveTuning strategy extrapolates previously gathered measurements of a configuration to predict the performance in the current simulation state. This allows for an efficient selection of promising configurations without the need to evaluate them.
 
     \item[RuleBasedTuning]
-        The RuleBasedTuning strategy uses a set of rules to discard undesirable configurations immediately. The rules are based on expert knowledge in a \textit{if-then} fashion and use aggregate statistics of simulation (called \textit{LiveInformation}) to eliminate configurations that are unlikely to be the best Configuration~\cite{endreport.pdf}.
+        The RuleBasedTuning strategy uses a set of rules to discard undesirable configurations immediately. The rules are based on expert knowledge in a \textit{if-then} fashion and use aggregate statistics of the simulation state(called \textit{LiveInformation}) to make decisions~\cite{endreport.pdf}.
 
     \item[FuzzyTuning]
-        The FuzzyTuning strategy is similar to the RuleBasedTuning strategy, but uses a fuzzy logic system to evaluate the desirability of a configuration. This allows for both an interpolation and extrapolation of the rules to account for configurations that are not covered by the expert knowledge~\cite{Manuel_Lerchner_Thesis.pdf}.
+        The FuzzyTuning strategy is similar to the RuleBasedTuning strategy, but uses fuzzy logic systems to evaluate configurations. This allows for both an implicit inter- and extrapolation of the rules to account for configurations that are not covered by the expert knowledge~\cite{Manuel_Lerchner_Thesis.pdf}.
 
 \end{description}
 
@@ -211,41 +207,40 @@ Since no single configuration can deliver optimal performance across all simulat
 
 \subsection*{Performance Improvements}
 
-The most compelling advantage of auto-tuning is the significant performance improvements it can achieve. It has been shown many times that AutoPas can provide significant performance improvements across diverse molecular dynamics simulation scenarios, both in the standalone application aswell as in established MD engines such as ls1 mardyn and LAMMPS~\cite{SECKLER2021101296}\cite{Gratl2022AutoPas}, thereby providing compelling evidence for the effectiveness and importance of this approach.
+The most compelling advantage of auto-tuning is the significant performance improvements it can achieve. It has been shown many times that AutoPas can provide significant performance improvements across diverse molecular dynamics simulation scenarios, both in the standalone application aswell as in established MD engines such as ls1 mardyn and LAMMPS~\cite{SECKLER2021101296}\cite{Gratl2022AutoPas}. Those improvements provide compelling evidence for the effectiveness and importance of the auto-tuning approach.
 
 \subsection*{Accessibility and Ease of Use}
-AutoPas's tuning framework enables scientists to achieve optimal performance directly out of the box, without requiring deep expertise in performance optimization or parallel computing, which represents a significant advantage for the molecular dynamics community where researchers often need to focus on their scientific objectives rather than computational intricacies. This inherent user-friendliness is particularly valuable when integrating AutoPas into other simulation frameworks, as developers can leverage its sophisticated auto-tuning capabilities while maintaining a straightforward implementation path that minimizes the complexity traditionally associated with performance optimization in high-performance computing environments.
+
+AutoPas's tuning framework enables scientists to achieve optimal performance directly out of the box, without requiring deep expertise in performance optimization. The inherent user-friendliness is particularly valuable when integrating AutoPas into other simulation frameworks, as developers can simply treat the simulation engine as a black box and let the auto-tuning framework handle the optimization.
 
 \section{Drawbacks of AutoTuning}
 
 \subsection*{Suboptimal Configurations}
 
-A major drawback of auto-tuning in the way it is implemented in AutoPas is the inherent overhead caused by tuning phases. As the tuning process requires evaluating many configurations, the overhead of evaluating many suboptimal configurations quickly adds up. This is especially problematic as the performance of different configurations can span several orders of magnitude~\cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}, quickly leading to noticeable increases in the total simulation time.
+A major drawback of auto-tuning in the way it is implemented in AutoPas is the inherent overhead caused by tuning phases. As the tuning process requires evaluating many configurations, the overhead of evaluating suboptimal configurations quickly adds up. This is especially problematic bad configurations, performing orders of magnitude worse than the optimal configuration, quickly lead to noticeable increases in the total simulation time.
 
-Even though the tuning strategies employed by AutoPas are highly efficient, they still sometimes suggest suboptimal configurations. Rule-driven tuning strategies such as \textit{RuleBasedTuning} and \textit{FuzzyTuning} can mitigate this problem to some extent by making use of expert knowledge, however even they can not guarantee to find the best configuration in all cases, as the underlying expert knowledge is expected to be highly incomplete.
+Even though the tuning strategies employed by AutoPas are highly efficient, they still tend to suggest suboptimal configurations from time to time. More advanced tuning strategies such such as \textit{RuleBasedTuning} or \textit{FuzzyTuning} can mitigate this problem to some extent, however even they can not guarantee to always finding the best configuration, as the underlying expert knowledge for both strategies is expected to be highly incomplete. \autoref{fig:unnecessary-tuning-phases} shows typical timing profile of a simulation for every available tuning strategy. The overhead caused by tuning phases is very noticeable, and is present in all tuning strategies.
 
-Consequently, there will always be some overhead caused by performing tuning phases.
+As no tuning strategy is capable of just selecting optimal configurations, the tuning process will always introduce some overhead.
 
 \subsection*{Periodic Re-Tuning}
 
 Even though AutoPas is capable of performing periodic auto-tuning, it is often beneficial to just execute a single tuning phase right at the beginning of the simulation.
 
-Ideally the beforementioned overhead of evaluating suboptimal configurations leads to discovering a better configuration than the current one. However, many scenarios, especially homogeneous ones with simple interaction models, tend to behave fairly stable over time making it very likely that re-tuning does not lead to a refined configuration. \autoref{fig:unnecessary-tuning-phases} shows this effect for the ExplodingLiquid scenario provided by the \texttt{md-flexible} framework.
+Ideally the beforementioned overhead of evaluating suboptimal configurations leads to discovering a better configuration at the end of the tuning phase. However, many scenarios, especially homogeneous ones with simple interaction models, tend to behave fairly stable over time making it very likely that re-tuning does not lead to a improved configuration. In such cases, the overhead of re-tuning is unnecessary and increases the total simulation time unnecessarily. \autoref{fig:unnecessary-tuning-phases} shows this effect for the ExplodingLiquid scenario provided by the \texttt{md-flexible} framework.
 
-Further evaluation of \texttt{md-flexible} data obtained in \cite{lerchner2024} using the provided example scenarios shows that only three out of 184 run show any changes in the best Configuration after the first tuning phase. This indicates that all currently provided example scenarios of \texttt{md-flexible} are incapable of demonstrating the benefits of periodic re-tuning and that additional tuning phases are mostly causing unnecessary overhead.
+Further evaluation of the data obtained in \cite{lerchner2024} shows that only three out of 184 run using slight variations of example scenarios of \texttt{md-flexible} show any changes in the best Configuration after the initial tuning phase. This indicates that all currently provided example scenarios of \texttt{md-flexible} are incapable of demonstrating the benefits of periodic re-tuning and that performing additional tuning phases on these scenarios only increases the total simulation time.
 
-To fully demonstrate the benefits of periodic re-tuning, more complex scenarios, most likely involving multiple MPI ranks and inhomogeneous particle distributions, are necessary. Simulating inhomogeneous scenarios in an MPI environment can cause the load to be distributed unevenly across both MPI ranks and time steps, further increasing the potential benefits of performing periodical re-tuning on each rank (See \cite{Newcome2023Poster}).
+To fully demonstrate the benefits of periodic re-tuning, more complex scenarios, most likely involving multiple MPI ranks and inhomogeneous particle distributions, are necessary. Simulating inhomogeneous scenarios in an MPI environment increases the chance of variying particle distribution across both MPI ranks and time steps, increasing the benefits of performing periodical re-tuning on each rank (See \cite{Newcome2023Poster}).
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=\columnwidth]{figures/unnecessary-tuning-phases.png}
     \caption{
-        Time spent calculating forces per iteration in the ExplodingLiquid Scenario. There exists a considerable overhead in the total simulation time caused by tuning phases. As the simulation is stable over time, the overhead of re-tuning is unnecessary. (Data obtained from \cite{lerchner2024})
+        Typical timing profile of the ExplodingLiquid simulation for every available tuning strategy. The plot clearly shows that all tuning strategies introduc overhead introduced during tuning phases. (Data obtained from \cite{lerchner2024})
     }
     \label{fig:unnecessary-tuning-phases}
 \end{figure}
-
-\newpage
 
 \section{Early Stopping Optimization}
 
