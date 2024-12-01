@@ -338,3 +338,16 @@
   journal = {Journal of Computational Science},
   doi     = {10.1016/j.jocs.2020.101296}
 }
+
+
+@mastersthesis{Papula2020,
+  author   = {Papula, Marco},
+  title    = {Implementing the Linked Cell Algorithm in AutoPas using References},
+  year     = {2020},
+  school   = {Technical University of Munich},
+  month    = {Sep},
+  language = {en},
+  abstract = {AutoPas is an open-source library implemented in C++ that provides a variety of Molecular Dynamics (MD) algorithms optimized for most modern hardware. The library supports auto-tuning, meaning the library will periodically evaluate the whole domain and if another algorithm is expected to increase performance, switch containers accordingly. This process currently involves copying every particle in the domain into a new container, cancelling out some if not all of the performance gained from switching containers. This thesis describes a proof of concept implementation of the Linked Cells container, whose cells operate on references with the actual particles being stored in another structure. The thesis demonstrates
+              the correctness of the implementation and gives a rough estimate of its performance.},
+  keywords = {AutoPas}
+}
