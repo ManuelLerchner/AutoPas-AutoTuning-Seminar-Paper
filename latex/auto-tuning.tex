@@ -120,7 +120,7 @@ This section provides a brief overview of the six tunable parameters available i
                 The Verlet Lists algorithm uses a second radius $r_v = {r_c} + \Delta_s$ (yellow circle) and considers all particles within this radius as potential neighbors. Contrary to LinkedCells, each particle maintains its own list of potential neighbors, resulting in a higher memory overhead.
                 As the bigger radius $r_v$ provides a buffer region, it is possible to only rebuild the neighbor-list every $n$ simulation steps, as long as no particle can move from outside $r_c + \Delta_s$ to inside $r_c$ unnoticed~\cite{NEWCOME2023115278}.
 
-                VerletLists have few spurious distance calculations, but are less cache-friendly as neighboring particles are not stored together in memory~\cite{Gratl2022AutoPas}. This results in very inefficient vectorization~\cite{PALL20132641}.
+                VerletLists have few spurious distance calculations but are less cache-friendly as neighboring particles are not stored together in memory~\cite{Gratl2022AutoPas}. This results in very inefficient vectorization~\cite{PALL20132641}.
 
             \item[$\bullet$ Verlet Cluster Lists]
                 The Verlet Cluster Lists algorithm improves on the VerletLists algorithm by grouping particles into clusters of size $M$ ($M=4$ in the figure) and performing neighbor-list calculations on a cluster level~\cite{PALL20132641}. This reduces the memory overhead significantly. However, it results in more spurious distance calculations as all particles in neighboring clusters must be considered when calculating forces. When $M$ is chosen in accordance with the SIMD width of the system, efficient vectorization is possible~\cite{Gratl2022AutoPas}~\cite{PALL20132641}.
@@ -196,7 +196,7 @@ The currently available tuning strategies in AutoPas are:
         The RuleBasedTuning strategy uses a set of rules to discard undesirable configurations immediately. The rules are based on expert knowledge in a \textit{if-then} fashion and use aggregate statistics of the simulation state to make decisions~\cite{endreport.pdf}.
 
     \item[FuzzyTuning]
-        The FuzzyTuning strategy is similar to the RuleBasedTuning strategy, but uses fuzzy logic systems to evaluate configurations. This allows for both an inter- and extrapolation of the rules to account for configurations not covered by the expert knowledge~\cite{Manuel_Lerchner_Thesis.pdf}.
+        The FuzzyTuning strategy is similar to the RuleBasedTuning strategy but uses fuzzy logic systems to evaluate configurations. This allows for both an inter- and extrapolation of the rules to account for configurations not covered by the expert knowledge~\cite{Manuel_Lerchner_Thesis.pdf}.
 
 \end{description}
 
@@ -335,7 +335,7 @@ To evaluate the performance of the early stopping mechanism, we perform a benchm
     \item[Limitations and Future Work:]
         The current implementation of the early stopping mechanism resets the $fastestTime$ variable prior to each tuning phase, resulting in a complete loss of the information gathered in previous iterations. This ensures that the $fastestTime$ variable is always up-to-date with the current simulation state and prevents the early stopping mechanism from mistakenly aborting configuration based on a timing measurement that can no longer be achieved due to changes in the simulation state.
 
-        An improvement version could only reset the $fastestTime$ variable to a running average of timing measurements collected during the prior simulation phase. This would allow the early stopping mechanism to start with a reasonable estimate of achievable performance, increasing the likelihood of aborting unsuitable configurations early.
+        An improved version could only reset the $fastestTime$ variable to a running average of timing measurements collected during the prior simulation phase. This would allow the early stopping mechanism to start with a reasonable estimate of achievable performance, increasing the likelihood of aborting unsuitable configurations early.
 
 \end{description}
 
@@ -362,11 +362,11 @@ ls1 mardyn differs from the previously mentioned MD engines as it uses the Linke
 \section{Conclusion}
 
 We have presented an overview of the AutoPas framework and its auto-tuning capabilities, demonstrating the benefits and challenges of dynamic auto-tuning. Moreover, we investigated the potential of a naive early stopping mechanism to reduce some of the inherent overhead caused by tuning phases.
-Early measurements show that the mechanism can reduce the total simulation time by up to 18.9\% without causing additional overhead which makes early stopping a promising improvement to the AutoPas framework.
+Early measurements show that the mechanism can reduce the total simulation time by up to 18.9\% without causing additional overhead, making early stopping a promising improvement to the AutoPas framework.
 
 The comparison with established MD engines such as GROMACS, LAMMPS, and ls1 mardyn reveals a fundamental trade-off in software design. While these engines achieve excellent performance through highly specialized implementations, AutoPas offers greater flexibility and adaptability through its modular architecture and dynamic optimization capabilities by accepting some performance overhead.
 
-The successfull integration of AutoPas into ls1 mardyn and LAMMPS demonstrates that these approaches can be complementary rather than mutually exclusive.
+The successful integration of AutoPas into ls1 mardyn and LAMMPS demonstrates that these approaches can be complementary rather than mutually exclusive.
 
 \newpage
 
