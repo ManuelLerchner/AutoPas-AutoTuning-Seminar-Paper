@@ -1,6 +1,6 @@
 # Algorithm Selection and Auto-Tuning in AutoPas Seminar Paper
 
-This repository contains my seminar paper and presentation materials for the `Seminar in Methods for Molecular Dynamics` course conducted at the Technical University of Munich (TUM). (!!TODO!! Short summary)
+This repository contains my seminar paper and presentation materials for the `Seminar in Methods for Molecular Dynamics` course conducted at the Technical University of Munich (TUM). The paper and slides provide an introduction molecular dynamics (MD) simulations using the AutoPas framework. The paper also discusses the benefits and drawbacks of auto-tuning in MD simulations and introduces an early stopping optimization to reduce the overhead of parameter space exploration.
 
 ## Table of Contents
 
