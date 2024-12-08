@@ -4,13 +4,27 @@ This repository contains my seminar paper and presentation materials for the `Se
 
 ## Table of Contents
 
-- TODO
+1. Introduction
+2. AutoPas
+    - Algorithm Library
+    - Tunable Parameters
+    - Auto-Tuning Framework
+3. Benefits of Auto-Tuning
+4. Drawbacks of Auto-Tuning
+5. Early Stopping Optimization
+    - Evaluation: Exploding Liquid Simulation
+    - Analysis and Discussion
+6. Comparison with Other MD Engines
+    - GROMACS
+    - LAMMPS
+    - ls1 mardyn
+7. Conclusion
 
 ## Abstract
 
-TODO
+Simulating molecular dynamics (MD) presents a significant computational challenge due to the vast number of particles involved in modern experiments. Naturally, researchers have put much effort into developing algorithms and frameworks that can efficiently simulate these systems. This paper focuses on the AutoPas framework, a modern particle simulation library that uses dynamic optimization techniques to achieve high performance in complex simulation scenarios. We compare AutoPas with other prominent MD engines, such as GROMACS, LAMMPS, and ls1 mardyn, and investigate a possible improvement to AutoPas' auto-tuning capabilities by introducing an early stopping mechanism aiming to reduce the overhead of parameter space exploration. Our evaluation shows that such a mechanism can reduce the total simulation time by up to 18.9\% in specific scenarios, demonstrating the potential of this improvement.
 
-Index Terms: TODO
+Index Terms: `molecular dynamics`, `auto-tuning`, `AutoPas`, `early-stopping`, `GROMACS`, `LAMMPS`, `ls1 mardyn`
 
 ## Paper
 
