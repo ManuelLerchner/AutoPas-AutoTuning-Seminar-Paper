@@ -54,7 +54,7 @@
 
 \begin{document}
 
-\title{Algorithm Selection and Auto-Tuning in AutoPas}
+\title{Auto-Tuning with Early Stopping in AutoPas}
 
 \author{
     \IEEEauthorblockN{ Manuel Lerchner}
@@ -66,7 +66,9 @@
 \maketitle
 
 \begin{abstract}
-    Simulating molecular dynamics (MD) presents a significant computational challenge due to the vast number of particles involved in modern experiments. Naturally, researchers have put much effort into developing algorithms and frameworks that can efficiently simulate these systems. This paper focuses on the AutoPas framework, a modern particle simulation library that uses dynamic optimization techniques to achieve high performance in complex simulation scenarios. We compare AutoPas with other prominent MD engines, such as GROMACS, LAMMPS, and ls1 mardyn, and investigate a possible improvement to AutoPas' auto-tuning capabilities by introducing an early stopping mechanism aiming to reduce the overhead of parameter space exploration. Our evaluation shows that such a mechanism can reduce the total simulation time by up to 18.9\% in specific scenarios, demonstrating the potential of this improvement.
+    Simulating molecular dynamics (MD) presents a significant computational challenge due to the vast number of particles involved in modern experiments. Naturally, researchers have put much effort into developing algorithms and frameworks that can efficiently simulate these systems. This paper focuses on the AutoPas framework, a modern particle simulation library that uses dynamic optimization techniques to achieve high performance in complex simulation scenarios. We introduce the AutoPas framework as a natural progression from existing MD engines, such as GROMACS, LAMMPS, and ls1 mardyn\footnote{
+        While it is possible to include AutoPas into ls1 mardyn and LAMMPS, we solely consider both standalone applications in this paper.
+    }, and investigate a possible improvement to AutoPas' auto-tuning capabilities by introducing an early stopping mechanism aiming to reduce the overhead of parameter space exploration. Our evaluation shows that such a mechanism can reduce the total simulation time by up to 18.9\% in specific scenarios, demonstrating the potential of this improvement.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -81,7 +83,31 @@ Well-established molecular dynamics engines, such as GROMACS, LAMMPS, and ls1 ma
 
 AutoPas approaches the challenge of high-performance molecular dynamics simulations differently: Instead of choosing a single implementation prior to the simulation, AutoPas uses dynamic optimizations to adjust its implementation based on the simulation state and the actual hardware performance. This approach is favorable, as the engine can adapt and optimize itself without external intervention. However, dynamic optimizations come at the cost of increased complexity and potential overhead due to the need for frequent re-evaluations of the selected implementation.
 
-This paper provides an overview of the AutoPas framework and the benefits and challenges of using dynamic auto-tuning in molecular dynamics simulations. We compare AutoPas with other prominent MD engines, such as GROMACS, LAMMPS, and ls1 mardyn, and investigate a possible improvement to AutoPas' auto-tuning capabilities by introducing an early stopping mechanism aiming to reduce the overhead of parameter space exploration.
+This paper provides an overview of the AutoPas framework and the benefits and challenges of using dynamic auto-tuning in molecular dynamics simulations. Moreover, we investigate the potential of an early stopping mechanism and evaluate its performance in the context of the AutoPas framework.
+
+\section{Related Work}
+
+Established MD engines such as GROMACS, LAMMPS, and ls1 mardyn have been developed over many years and have been optimized to achieve high performance in their respective use cases. This section provides an overview of these engines.
+
+\subsection{GROMACS}
+
+GROMACS implements a single, highly optimized variant of the Verlet Cluster List algorithm. The algorithm allows for flexible cluster sizes specifically designed for achieving good SIMD vectorization~\cite{PALL20132641}.
+
+Gromacs allows setting the vectorization parameters for the cluster size $M$ and the number of particles in neighbor groups $N$ statically to tune the force calculations to the SIMD width of the system~\cite{PALL20132641}. With suitable values for $M$ and $N$, computations of $M \times N$ particle interactions can be performed with just two SIMD load instructions~\cite{Solving_Software_Challenges_Exascale_2014}, drastically reducing the number of memory operations required for the force calculations and reaching up to 50\% of the peak flop rate on all supported hardware platforms~\cite{Solving_Software_Challenges_Exascale_2014}.
+
+Tuning those parameters is time-consuming and relies on a detailed understanding of many low-level software optimization aspects of the different hardware platforms~\cite{PALL20132641}. In GROMACS, the developers must create and maintain such performance models for each supported hardware platform, which is a time-consuming and labor-intensive process~\cite{PALL20132641}.
+
+\subsection{LAMMPS}
+
+LAMMPS utilizes a performance-optimized version of the Verlet List algorithm. To optimize cache performance, LAMMPS stores its neighbor lists in a global data structure split across multiple memory pages. Each page stores neighbor lists for multiple particles in a contiguous memory block, allowing for efficient allocation and deallocation of the neighbor lists~\cite{THOMPSON2022108171}. All particle data is stored in a Structure of Arrays (SoA) layout~\cite{THOMPSON2022108171}, allowing for efficient vectorization of the force calculations.
+
+\subsection{ls1 mardyn}
+
+ls1 mardyn differs from the previously mentioned MD engines as it uses the Linked Cells algorithm for particle interactions. Using LinkedCells provides a better memory efficiency than GROMACS and LAMMPS, allowing for simulations of massive particle systems~\cite{tchipev2019twe}. Internally, ls1 mardyn uses the default data layout of \textit{AoS} (Array of Structures) for storing particle data and converts it to an \textit{SoA} (Structure of Arrays) layout when required. Particular branches aimed at simulating massive particle systems can use a \texttt{RMM} (Reduced Memory Mode) layout in combination with a \textit{SoA} (Structure of Arrays) data layout, allowing for simulations of up to twenty trillion atoms~\cite{tchipev2019twe}.
+
+\vspace{0.2cm}
+
+While GROMACS, LAMMPS, and ls1 mardyn achieve remarkable performance through specialized and statically optimized implementations, their reliance on manual tuning and hardware-specific adjustments presents challenges. These limitations motivates the need for adaptive frameworks like AutoPas, which aim to dynamically optimize configurations during runtime, providing a more flexible and user-friendly approach to high-performance molecular dynamics simulations.
 
 \section{AutoPas}
 
@@ -91,16 +117,16 @@ To eliminate the need for manual configuration selection and enable dynamic opti
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=2.2in]{figures/AutoPasLibraryStructure.png}
+    \includegraphics[width=1.9in]{figures/AutoPasLibraryStructure.png}
     \caption{AutoPas Library Structure as depicted by~\cite{Newcome2023Poster}}
     \label{fig_architecture}
 \end{figure}
 
 \subsection{Algorithm Library}
 
-All different algorithmic implementations for solving N-Body problems are part of the so-called \textit{Algorithm Library} of AutoPas. The Algorithm Library contains different implementations for certain key aspects of the simulation, such as neighbor identification, traversal patterns, memory layouts, and optimization techniques. Currently, AutoPas supports the six tunable parameters: \textit{Container}, \textit{Data Layout}, \textit{Newton 3}, \textit{Traversal}, \textit{Load Estimator} and \textit{Cell Size Factor} which combine to form a configuration.
+All different algorithmic implementations for solving N-Body problems are part of the so-called \textit{Algorithm Library} of AutoPas. The Algorithm Library contains different implementations for certain key aspects of the simulation, such as neighbor identification, traversal patterns, memory layouts, and optimization techniques. Currently, AutoPas supports the six tunable parameters: \textit{Container}, \textit{Data Layout}, \textit{Newton 3}, \textit{Traversal}, \textit{Load Estimator} and \textit{Cell Size Factor} which are combined to form a configuration.
 
-Maintaining a library of different implementations has several benefits: As the library is modular, it is straightforward to add new, potentially hardware-specific, implementations for each key aspect of the simulation. This ensures that the simulation engine remains maintainable and can provide performance portability across a wide range of hardware platforms~\cite{Tchipev2020}. The interchangeable nature of the implementations also ensures implicit backward compatibility, making it easy to study the effects of new hardware on existing implementations~\cite{Tchipev2020}. Users of the library also benefit from this approach. As AutoPas is able to automatically select the best configuration for their specific use case and hardware setup, users do not need to have a deep understanding of the underlying hardware or software optimizations and can fully focus on the high-level aspects of their simulation~\cite{Tchipev2020}\cite{Gratl2022AutoPas}.
+Maintaining a library of different implementations has several benefits: As the library is modular, it is straightforward to add new, potentially hardware-specific, implementations for each key aspect of the simulation. This ensures that the simulation engine remains maintainable and can provide performance portability across a wide range of hardware platforms. The interchangeable nature of the implementations also ensures implicit backward compatibility, making it easy to study the effects of new hardware on existing implementations. Users of the library also benefit from this approach. As AutoPas is able to automatically select the best configuration for their specific use case and hardware setup, users do not need to have a deep understanding of the underlying hardware or software optimizations and can fully focus on the high-level aspects of their simulation~\cite{Tchipev2020}\cite{Gratl2022AutoPas}.
 
 \subsection{Tunable Parameters}
 
@@ -138,7 +164,7 @@ This section provides a brief overview of the six tunable parameters available i
         multiple memory accesses. \textit{AoS} is the opposite. It allows for efficient access to properties of a single particle to, e.g., send it to another MPI rank, but results in inefficient vectorization~\cite{Gratl2022AutoPas}.
 
     \item[Newton 3]
-        A common optimization in molecular dynamics simulations is the application of Newton's third law, which allows reusing force calculations between two particles, reducing the number of force calculations by a factor of two. As Newton 3 can cause race conditions in parallel environments, not all traversal patterns support this optimization. The optimization can be enabled or disabled in accordance with the traversal pattern and the interaction model.
+        A common optimization in molecular dynamics involves applying Newton's third law to reuse force calculations between particle pairs, effectively reducing computational costs by half. However, not all parallel traversal patterns can safely implement this optimization without risking race conditions. For those that do, synchronization points must be added to ensure accurate force application, which in turn limits the potential for parallelism.
 
     \item[Traversal]
         Traversals are responsible for iterating over the particles in the simulation and calculating their interactions in a shared-memory environment~\cite{SECKLER2021101296}. The traversal pattern determines to which extent force calculations can be parallelized and whether optimizations, such as Newton 3, can be applied. The traversal patterns depicted in \autoref{fig_traversals} will again be shortly introduced below.
@@ -170,17 +196,13 @@ This section provides a brief overview of the six tunable parameters available i
 
 \subsection{Auto-Tuning Framework}
 
-A manual selection of suitable implementations for each tunable parameter would require extensive domain knowledge that is challenging to acquire and maintain under the constantly changing software and hardware landscape. To address this issue, AutoPas performs automated algorithm selection to optimize specific performance metrics, such as simulation speed or energy efficiency~\cite{Gratl2022AutoPas}. Internally, AutoPas periodically initiates so-called \textit{tuning-phases} in which promising configurations are evaluated in order to determine the best configuration for the current simulation state. The winning configuration is then used until the next tuning phase is initiated.
-
-The key to efficient tuning phases is the ability to efficiently determine promising configurations. The naive approach of evaluating all possible configurations is infeasible in practice, as many configurations turn out to be orders of magnitude slower than the optimal configuration~\cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}.
-
-AutoPas attempts to mitigate this problem by using Tuning Strategies. Tuning strategies inspect prior timing measurements or the simulation state and try to infer which configurations are likely to perform well. Only those configurations will then be evaluated.
+A manual selection of suitable implementations for each tunable parameter would require extensive domain knowledge that is challenging to acquire and maintain under the constantly changing software and hardware landscape. To address this issue, AutoPas performs automated algorithm selection to optimize specific performance metrics, such as runtime or energy efficiency~\cite{Gratl2022AutoPas}. Internally, AutoPas periodically initiates so-called \textit{tuning-phases} in which promising configurations are evaluated in order to determine the best configuration for the current simulation state. The winning configuration is then used until the next tuning phase is initiated.
 
 The currently available tuning strategies in AutoPas are:
 
 \begin{description}[style=nextline]
     \item[FullSearch]
-        The FullSearch strategy naively evaluates all possible configurations, thus always finding the best configuration. As many configurations tend to be suboptimal\cite{Manuel_Lerchner_Thesis.pdf}, the FullSearch strategy often causes a considerable overhead.
+        The FullSearch strategy naively evaluates all possible configurations, thus always finding the best configuration.
 
     \item[RandomSearch]
         The RandomSearch strategy randomly selects configurations out of the entire search space, causing less overhead than the FullSearch strategy at the cost of potentially missing the best configuration.
@@ -209,17 +231,21 @@ The most compelling advantage of auto-tuning is the significant performance impr
 
 \subsection*{Accessibility and Ease of Use}
 
-AutoPas's tuning framework enables users to achieve optimal performance directly out of the box without requiring deep expertise in performance optimization. The inherent user-friendliness is particularly valuable when integrating AutoPas into other simulation frameworks, as developers can treat the simulation engine as a black box and let the auto-tuning framework handle the optimization.
+AutoPas's tuning framework enables users to achieve optimal performance directly out of the box without requiring deep expertise in performance optimization. Different performance characteristics caused by varying hardware setups are automatically accounted for by the auto-tuning framework, allowing users to focus on the actual simulation~\cite{Tchipev2020}.
 
-\section{Drawbacks of AutoTuning}
+The inherent user-friendliness is particularly valuable when integrating AutoPas into other simulation frameworks, as developers can treat the simulation engine as a black box and let the auto-tuning framework handle the optimization.
+
+\section{Drawbacks of Auto-Tuning}
 
 \subsection*{Suboptimal Configurations}
 
-A major drawback of auto-tuning in the way it is implemented in AutoPas is the inherent overhead caused by tuning phases. As the tuning process requires evaluating many configurations, the overhead of configurations, performing orders of magnitude worse than the optimal configuration, quickly leads to noticeable increases in the total simulation time~\cite{endreport.pdf}~\cite{Manuel_Lerchner_Thesis.pdf}.
+A major drawback of auto-tuning in the way it is implemented in AutoPas is the inherent overhead caused by tuning phases. Even though it is an important characteristic of tuning strategies to infer and evaluate only those configurations that are likely to perform well, this inference is not always successful. Many configurations can turn out to be orders of magnitude slower than the optimal configuration~\cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}, making their evaluation extremely costly.
 
-Even though the tuning strategies employed by AutoPas are highly efficient, they still suggest suboptimal configurations from time to time. More advanced tuning strategies such as \textit{RuleBasedTuning} or \textit{FuzzyTuning} can mitigate this problem to some extent, however even they can not guarantee always finding the best configuration, as the underlying expert knowledge for both strategies is expected to be highly incomplete.
+Advanced tuning strategies such as \textit{RuleBasedTuning} or \textit{FuzzyTuning} can mitigate this problem to some extent, however even they cannot guarantee always finding the best configuration, as the underlying expert knowledge for both strategies is expected to be highly incomplete.
 
-\autoref{fig:unnecessary-tuning-phases} shows a typical timing profile of the ExplodingLiquid simulation for every available tuning strategy. The inherent overhead caused by tuning phases is very noticeable and is present in all tuning strategies. For some tuning strategies, the overhead results in a considerable increase in the total simulation time (see \autoref{fig:full_search} and \autoref{fig:predictive_tuning}).
+This challenge highlights the need for additional optimization techniques, such as the early stopping mechanism introduced in \autoref{sec:early-stopping}, to reduce the overhead caused by evaluating suboptimal configurations.
+
+\autoref{fig:unnecessary-tuning-phases} shows a typical timing profile of the ExplodingLiquid simulation for every available tuning strategy. The inherent overhead caused by tuning phases is very noticeable and is present in all tuning strategies. For some tuning strategies, the overhead results in a considerable increase in the total simulation time (see default cases in \autoref{fig:full_search} and \autoref{fig:predictive_tuning}).
 
 \subsection*{Periodic Re-Tuning}
 
@@ -227,7 +253,9 @@ Even though AutoPas is capable of performing periodic auto-tuning, it is often b
 
 Ideally, the aforementioned overhead of evaluating suboptimal configurations leads to discovering a better configuration at the end of the tuning phase. However, many scenarios, especially homogeneous ones with simple interaction models, tend to behave fairly stable over time, making it very likely that re-tuning does not lead to an improved configuration. In such cases, the overhead of re-tuning is unnecessary and only increases the total simulation time. \autoref{fig:unnecessary-tuning-phases} depicts this effect for the ExplodingLiquid simulation.
 
-Further evaluation of the data obtained in \cite{lerchner2024} shows that only three out of 184 runs using slight variations of example scenarios of \texttt{md-flexible} show any changes in the best configuration after the initial tuning phase. This indicates that all currently provided example scenarios of \texttt{md-flexible} are incapable of demonstrating the benefits of periodic re-tuning and that performing additional tuning phases on these scenarios only increases the total simulation time.
+Further evaluation of the data obtained in \cite{lerchner2024} shows that only three out of 184 runs using slight variations of example scenarios provided by \texttt{md-flexible}\footnote{
+    \texttt{md-flexible} is a molecular dynamics simulation framework making use of the AutoPas library. It is included in the AutoPas repository and provides a wide range of example scenarios to demonstrate the capabilities of the AutoPas library.
+} with both single and multi-node configurations show any changes in the best configuration after the initial tuning phase. This indicates that all currently provided example scenarios of \texttt{md-flexible} are incapable of demonstrating the benefits of periodic re-tuning and that performing additional tuning phases on these scenarios only increases the total simulation time.
 
 More complex scenarios, most likely involving multiple MPI ranks and inhomogeneous particle distributions, are necessary to fully demonstrate the benefits of periodic re-tuning. Simulating such inhomogeneous scenarios in an MPI environment increases the chance of varying particle distribution across both MPI ranks and time steps, increasing the likelihood of benefitting from periodic re-tuning on each rank (See \cite{Newcome2023Poster}).
 
@@ -235,12 +263,15 @@ More complex scenarios, most likely involving multiple MPI ranks and inhomogeneo
     \centering
     \includegraphics[width=\columnwidth]{figures/unnecessary-tuning-phases.png}
     \caption{
-        Typical timing profile of the ExplodingLiquid simulation for every available tuning strategy. The plot clearly shows that all tuning strategies introduce overhead during the tuning phases. (Data obtained from \cite{lerchner2024})
+        Typical timing profile of the ExplodingLiquid simulation for every available tuning strategy. The plot clearly shows that all tuning strategies introduce overhead during the tuning phases. Data obtained from \cite{lerchner2024}
     }
     \label{fig:unnecessary-tuning-phases}
 \end{figure}
 
+\newpage
+
 \section{Early Stopping Optimization}
+\label{sec:early-stopping}
 
 To minimize some of the introduced drawbacks of the auto-tuning process, \cite{endreport.pdf}\cite{Manuel_Lerchner_Thesis.pdf}\cite{autopas_issue673} suggest that an \textit{early stopping} mechanism could be beneficial for the AutoPas framework. The primary goal of such a mechanism would be to detect tuning iterations that take much longer than the currently best-known configuration and to stop the evaluation of those configurations early. There are two approaches to this problem:
 
@@ -256,9 +287,12 @@ To minimize some of the introduced drawbacks of the auto-tuning process, \cite{e
           Implementing this approach would require a big rewrite of AutoPas' internal structure and is therefore not feasible in the short term.
 \end{itemize}
 
-To get a first impression of the potential benefits of an early stopping mechanism, we implemented the first approach into the AutoPas framework. The changes to the existing codebase are minimal, as the early-stopping mechanism can be implemented using existing functionality. \autoref{alg_early_stopping} shows the main changes to the \texttt{AutoTuner.cpp} file.
+To get a first impression of the potential benefits of an early stopping mechanism, we implemented the first approach into the AutoPas framework\footnote{
+    See \href{https://github.com/AutoPas/AutoPas/tree/early-stopping}{
+        https://github.com/AutoPas/AutoPas/tree/early-stopping} for the initial implementation.
+}. The changes to the existing codebase are minimal, as the early-stopping mechanism can be implemented using existing functionality. \autoref{alg_early_stopping} shows the main changes to the \texttt{AutoTuner.cpp} file.
 
-Both described approaches require a user-defined threshold for the $allowedSlowdownFactor$ that determines when the evaluation of a configuration should be stopped. As finding optimal thresholds is non-trivial and may depend on the simulation scenario and the tuning strategy, suitable thresholds will be determined empirically in \autoref{sec:evaluation}.
+Both described approaches require a user-defined threshold for the $allowedSlowdownFactor$ that determines when the evaluation of a configuration should be stopped. As finding optimal thresholds is non-trivial and may depend on the simulation scenario and the tuning strategy, suitable thresholds will be determined empirically in the next section.
 
 \begin{algorithm}[h]
     \small
@@ -291,7 +325,11 @@ Both described approaches require a user-defined threshold for the $allowedSlowd
 \subsection{Evaluation: Exploding Liquid Simulation}
 \label{sec:evaluation}
 
-To evaluate the performance of the early stopping mechanism, we perform a benchmark using the Exploding Liquid scenario provided by \texttt{md-flexible}. The simulation consists of 1764 initially close-packed particles, rapidly expanding outwards and eventually hitting the simulation boundaries. All benchmarks are performed on a single node of the \href{https://doku.lrz.de/coolmuc-2-11484376.html}{CoolMUC2} supercomputer using 14 threads. To ensure reproducibility, all runs are repeated three times.
+To evaluate the performance of the early stopping mechanism, we perform a benchmark using the Exploding Liquid scenario\footnote{
+    The input file can be found at \href{
+        https://github.com/AutoPas/AutoPas/blob/master/examples/md-flexible/input/explodingLiquid.yaml}{explodingLiquid.yaml}.
+    A video of the simulation is available at \url{https://youtu.be/u7TE5KiSQ08}.
+} provided by \texttt{md-flexible}. The simulation consists of 1764 initially close-packed particles, rapidly expanding outwards and eventually hitting the simulation boundaries. All benchmarks are performed on a single node of the \href{https://doku.lrz.de/coolmuc-2-11484376.html}{CoolMUC2} supercomputer using 14 threads, and are repeated three times.
 
 \begin{description}[style=nextline]
     \item[FullSearch (\autoref{fig:full_search})]
@@ -320,13 +358,13 @@ To evaluate the performance of the early stopping mechanism, we perform a benchm
 \end{figure}
 
 \subsection{Analysis and Discussion}
-\begin{description}[leftmargin=1.2em, font=\itshape]
+\begin{description}[leftmargin=1.2em, font=\itshape, style=nextline]
     \item[Optimal Thresholds:]
-        The evaluated benchmarks show that using the early stopping mechanism can reduce the total simulation time for both the FullSearch and PredictiveTuning strategies. However, there only exists a narrow range of $allowedSlowdownFactor$ values where the early stopping mechanism is beneficial. Outside of this range, the total simulation time is comparable to the performance of the simulation without the early stopping mechanism.
+        The evaluated benchmarks show that there only exists a narrow range of $allowedSlowdownFactor$ values where the early stopping mechanism is beneficial. Outside of this range, the total simulation time is comparable to the performance of the simulation without the early stopping mechanism.
 
-        This is expected, as both limiting cases result in undesirable behavior: $allowedSlowdownFactor \to 1$ results in tuning phases with very few samples per configuration, as even slight noise in the performance measurements causes the early stopping mechanism to abort a configuration. This prohibits a reasonable estimation of the performance of a configuration and could result in a suboptimal configuration winning the tuning phase. On the other hand, $allowedSlowdownFactor \to \infty$ results in the early stopping mechanism never aborting a configuration, which is equivalent to not using the early stopping mechanism at all. Picking a suitable threshold corresponds to finding a balance between the two extremes.
+        This is expected, as both limiting cases result in undesirable behavior: $allowedSlowdownFactor \to 1$ results in tuning phases with very few samples per configuration, as even slight noise in the performance measurements causes the early stopping mechanism to abort a configuration. This results in very quick tuning phases but prohibits a reasonable estimation of the performance of a configuration and could result in a suboptimal configuration winning the tuning phase. On the other hand, $allowedSlowdownFactor \to \infty$ results in the early stopping mechanism never aborting a configuration, which is equivalent to not using the early stopping mechanism at all. As stated previously, this results in very long tuning phases. Picking a suitable threshold corresponds to finding a balance between the two extremes.
 
-        From the executed benchmarks, we deduce that the optimal threshold for the early stopping mechanism is around 4-5 for the \textit{Exploding Liquid} scenario. However, the optimal threshold probably varies between different simulation scenarios and tuning strategies, and further benchmarks are required to determine the optimal threshold for other scenarios. It is, however, noteworthy that the early stopping mechanism never caused a significant increase in the total simulation time, even when using suboptimal thresholds.
+        The optimal threshold of around 4.5 for the \textit{ExplodingLiquid} scenario probably varies between different scenarios and tuning strategies. Further benchmarks are required to determine the optimal threshold for other scenarios. It is, however, noteworthy that the early stopping mechanism never caused a significant increase in the total simulation time, even when using suboptimal thresholds.
 
     \item[Combination with Tuning Strategies:]
         The evaluated benchmarks show that a combination of the early stopping mechanism with good tuning strategies is beneficial and additionally reduces the total simulation time. Good tuning strategies are expected to benefit more from the early stopping mechanism, as evaluating good configurations early results in faster convergence of the $fastestTime$ variable. This allows for the early stopping mechanism to abort more configurations, further reducing the total tuning time.
@@ -337,26 +375,6 @@ To evaluate the performance of the early stopping mechanism, we perform a benchm
         An improved version could only reset the $fastestTime$ variable to a running average of timing measurements collected during the prior simulation phase. This would allow the early stopping mechanism to start with a reasonable estimate of achievable performance, increasing the likelihood of aborting unsuitable configurations early.
 
 \end{description}
-
-\section{Comparison with Other MD Engines}
-
-Established MD engines such as GROMACS, LAMMPS, and ls1 mardyn have been developed over many years and have been optimized to achieve high performance in their respective use cases. This section provides a short overview of those engines and highlights the differences in their implementations.
-
-\subsection{GROMACS}
-
-Contrary to AutoPas, GROMACS only implements a single, highly optimized variant of the Verlet Cluster List algorithm. The algorithm allows for flexible cluster sizes specifically designed for achieving good SIMD vectorization~\cite{PALL20132641}.
-
-Gromacs allows setting the vectorization parameters for the cluster size $M$ and the number of particles in neighbor groups $N$ statically to tune the force calculations to the SIMD width of the system~\cite{PALL20132641}. With suitable values for $M$ and $N$, computations of $M \times N$ particle interactions can be performed with just two SIMD load instructions~\cite{Solving_Software_Challenges_Exascale_2014}, drastically reducing the number of memory operations required for the force calculations and reaching up to 50\% of the peak flop rate on all supported hardware platforms~\cite{Solving_Software_Challenges_Exascale_2014}.
-
-Gromacs defaults to $M=4$ and selects $N \in \{2, 4, 8\}$ depending on the SIMD width of the system. However, tuning those values is time-consuming and relies on a detailed understanding of many low-level software optimization aspects of the different hardware platforms~\cite{PALL20132641}. In GROMACS, the developers must manually create and maintain such performance models for each supported hardware platform, which is a time-consuming and labor-intensive process~\cite{PALL20132641}.
-
-\subsection{LAMMPS}
-
-LAMMPS utilizes a performance-optimized version of the Verlet List algorithm. To optimize cache performance, LAMMPS stores its neighbor lists in a global data structure split across multiple memory pages. Each page stores neighbor lists for multiple particles in a contiguous memory block, allowing for efficient allocation and deallocation of the neighbor lists~\cite{THOMPSON2022108171}. All particle data is stored in a Structure of Arrays (SoA) layout~\cite{THOMPSON2022108171}, allowing for efficient vectorization of the force calculations.
-
-\subsection{ls1 mardyn}
-
-ls1 mardyn differs from the previously mentioned MD engines as it uses the Linked Cells algorithm for particle interactions. Using LinkedCells provides a better memory efficiency than GROMACS and LAMMPS, allowing for simulations of massive particle systems~\cite{tchipev2019twe}. Internally, ls1 mardyn uses the default data layout of \textit{AoS} (Array of Structures) for storing particle data. However, particular branches aimed at simulating massive particle systems can use a \texttt{RMM} (Reduced Memory Mode) layout in combination with a \textit{SoA} (Structure of Arrays) data layout, allowing for simulations of up to twenty trillion atoms~\cite{tchipev2019twe}.
 
 \section{Conclusion}
 
