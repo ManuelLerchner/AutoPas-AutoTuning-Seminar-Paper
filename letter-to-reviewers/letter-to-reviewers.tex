@@ -1,0 +1,151 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{enumitem}
+\setlist{noitemsep}
+
+\title{Response to Reviewers' Comments\\Algorithm Selection and Auto-Tuning in AutoPas}
+\author{Manuel Lerchner}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+I sincerely thank the reviewers for their valuable feedback and constructive suggestions, which helped shape the final version of the paper.
+
+In this response letter, I address each reviewer's comments and describe the changes made to the paper accordingly. Since the reviewers were anonymous, I will refer to them in an arbitrary order.
+
+
+\section*{Reviewer 1}
+\begin{enumerate}[label=\textbf{Comment \arabic*:}, itemsep=0.8em]
+    \item \textbf{[Title Change]} The title does not directly convey the main contribution of the paper.
+
+          \textbf{Response:}
+          Since the main focus of the paper is on the drawbacks of existing auto-tuning approaches, with a special focus on the idea of "Early Stopping", I have updated the title to "\textit{Auto-Tuning with Early Stopping in AutoPas}".
+
+    \item \textbf{[Wording]} AutoPas is a library, and can't be directly compared to full MD engines.
+
+          \textbf{Response:} I changed the introduction to introduce AutoPas differently. Namely, as a logical improvement over "single-implementation" MD engines, rather than a direct competitor, this avoids the mentioned issue.
+
+    \item \textbf{[Wording]} ls1-mardyn is not independent of AutoPas.
+
+          \textbf{Response:} I explicitly added that I just consider the version of ls1-mardyn without AutoPas.
+
+    \item \textbf{[Extra Info]} Linked cells can also only be rebuilt every n steps when using a skin-factor.
+
+          \textbf{Response:} I decided to \textbf{not} include this information for clarity and as it is not directly a key feature of standard linked cells.
+
+    \item \textbf{[Wording]} Simulation speed is unclear.
+
+          \textbf{Response:} As proposed, I changed the wording to runtime.
+
+    \item \textbf{[Duplicate Info]} The infeasibility of exhaustively testing all configurations is mentioned multiple times.
+
+          \textbf{Response:} As proposed, I changed the order of the sections to avoid this. Now I first introduce all tuning strategies and then use the problems of sometimes suggesting bad / too many configurations as a motivation for early stopping.
+
+    \item \textbf{[Clarification]} The exact part of the Figure readers should look at is not clear.
+
+          \textbf{Response:} As proposed, I added stated the section I refer to in the text.
+
+    \item \textbf{[Question]} Does the data of md-flexible runs contain MPI runs?
+
+          \textbf{Response:} Yes, the data of md-flexible contains some MPI runs (which also don't benefit from returning). I made this more clear in the text.
+
+    \item \textbf{[Reordering]} The last comparison section between the MD engines is out of place.
+
+          \textbf{Response:} I agree and moved the comparison to a "Related Work" section at the start of the paper. As proposed: This change also allows for a nice transition to the need for auto-tuning libraries such as AutoPas.
+\end{enumerate}
+
+\section*{Reviewer 2}
+\begin{enumerate}[label=\textbf{Comment \arabic*:}, itemsep=0.8em]
+    \item \textbf{[Possibly Missing Citation]} It is not clear where the idea of "stopping further samples" comes from.
+
+          \textbf{Response:} As I came up with this idea independently, I did \textbf{not} include a citation. I'm also unaware of any prior work that directly suggests this idea.
+
+    \item \textbf{[Reordering ]} Reordering of the comparison section.
+
+          \textbf{Response:} Also mentioned by reviewer 1. See the response above.
+
+    \item \textbf{[Question]} Why are the bar charts separated in "tuning" and "simulation" time?
+
+          \textbf{Response:} The original text already included this information indirectly in the analysis of both limiting cases, however, I agree that it requires some prior knowledge to connect the dots.
+          To make this clearer, I added two short sentences to the text explicitly explaining the effect of $allowedSlowdownFactor$ on the duration of tuning phases.
+
+\end{enumerate}
+
+\section*{Reviewer 3}
+
+\begin{enumerate}[label=\textbf{Comment \arabic*:}, itemsep=0.8em]
+    \item \textbf{[Clarity]} The introduction focuses too much on the comparison of MD engines.
+
+          \textbf{Response:} This has already addressed in parts by the previous reviewers. I rephrased the introduction to not focus on the comparison of MD engines as much.
+
+    \item \textbf{[Missing Reference]} The GitHub link to AutoPas is never mentioned in the text.
+
+          \textbf{Response:} I added a reference to the GitHub repository in the AutoPas section.
+
+    \item \textbf{[Reordering]} The comparison section is out of place.
+
+          \textbf{Response:} Also mentioned by reviewers 1 and 2. See the response above.
+
+    \item \textbf{[Wording]} "combine to form a configuration” sentence structure seems off to me
+
+          I changed it to the passive voice: "... are combined to form a configuration".
+
+    \item \textbf{[More details]} Is the load estimator used in single-ranked runs or in MPI runs? + How is the coloring affected by different cell size factors?
+
+          \textbf{Response:} I think those questions are very implementation-specific and feel too detailed for the scope of the paper. I decided to \textbf{not} include this extra information.
+
+    \item \textbf{[More details]} How does Bayesian Search work?
+
+          \textbf{Response:} I think this is again too detailed for the scope of the paper. For curious readers, I already provided the reference to the original paper, so I did not change anything here.
+
+    \item \textbf{[Wording]} Change "Benefits of Auto-Tuning" to "Benefits of AutoPas".
+
+          \textbf{Response:} I feel like the mentioned points are the benefits of auto-tuning in general, and AutoPas is just the example used in this paper. Also the text explicitly mentions when some aspects are specific to AutoPas. Therefore, I decided to \textbf{not} change this.
+
+    \item \textbf{[Clarity]} What is md-flexible?
+
+          \textbf{Response:} I added a short explanation of md-flexible to the text.
+
+    \item \textbf{[Clarity]} Why do most scenarios not benefit from re-tuning
+
+          \textbf{Response:} The text already contains a rough explanation of this. Namely, that many scenarios tend to be stable over time. I'm unaware of any rigorous proof of this / which formal conditions need to be met for this to be true. Therefore, I am unable to provide a more detailed explanation here. Maybe this could be a topic for future work.
+
+    \item \textbf{[Clarity]} What is the "Exploding Liquid" scenario?
+
+          \textbf{Response:} I added a short YouTube link for a video of the scenario as well as a link to the .yaml file for the scenario.
+
+    \item \textbf{[Question]} General Questions about the scenario.
+
+          \textbf{Response:}
+          The Exploding Liquid scenario was just meant as a showcase for the idea of Early Stopping, but I feel the general benefits would be quite similar for other scenarios. As stated in the text, more (scenario-specific) benchmarks are needed to make a general statement about the benefits of Early Stopping.
+          I think most of the questions about the scenario are answered by the added .yaml file, so I decided to \textbf{not} change anything here.
+
+    \item \textbf{[Clarity]} Early Stopping should not be able to increase the runtime.
+
+          \textbf{Response:} As early stopping essentially reduces the number of tests for a configuration, the resulting configurations tend to be "noisier". This can lead to worse runtimes when timing fluctuations cause a worse configuration to win. This is however already mentioned in the text, so I decided to leave this as is.
+
+    \item \textbf{[Error]} Ls1-mardyn can converts to SOA on the fly.
+          \textbf{Response:} I added this information to the text to make this more clear.
+
+
+
+\end{enumerate}
+
+\section*{Summary of Changes}
+
+The biggest change was the reordering of the comparison section, which was mentioned by all reviewers. I also changed the title to better reflect the main contribution of the paper. The content of the paper was mostly left unchanged, with some minor additions to clarify some points aswell as slight reordering of some sections.
+
+I hope that the changes made address the reviewers' concerns and improve the quality of the paper. I am looking forward to hearing your feedback on the revised version.
+
+\vspace{1em}
+
+\noindent Sincerely,\\
+Manuel Lerchner
+
+
+
+
+\end{document}

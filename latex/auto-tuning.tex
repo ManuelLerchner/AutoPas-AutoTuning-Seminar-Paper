@@ -111,7 +111,7 @@ While GROMACS, LAMMPS, and ls1 mardyn achieve remarkable performance through spe
 
 \section{AutoPas}
 
-AutoPas was developed on the basis of creating an efficient node-level particle simulation engine applicable to a wide range of scientific fields~\cite{Tchipev2020}. To achieve this goal, AutoPas uses a modular architecture that seamlessly integrates different algorithms and data structures into the simulation engine. As it is not capable of running simulations on its own, AutoPas serves as an intermediary layer between user-provided simulation code and implementations specifically designed to efficiently solve N-Body problems. The modular nature of AutoPas enables it to combine different implementations and create a wide range of so-called \textit{configurations}.
+AutoPas\footnotemark\ was developed on the basis of creating an efficient node-level particle simulation engine applicable to a wide range of scientific fields~\cite{Tchipev2020}. To achieve this goal, AutoPas uses a modular architecture that seamlessly integrates different algorithms and data structures into the simulation engine. As it is not capable of running simulations on its own, AutoPas serves as an intermediary layer between user-provided simulation code and implementations specifically designed to efficiently solve N-Body problems. The modular nature of AutoPas enables it to combine different implementations and create a wide range of so-called \textit{configurations}.
 
 To eliminate the need for manual configuration selection and enable dynamic optimization, AutoPas provides an auto-tuning framework. This framework periodically assesses different configurations and selects optimal ones based on performance metrics. This selection process is managed by \textit{TuningStrategies} that systematically suggest promising configurations to evaluate. \autoref{fig_architecture} illustrates the high-level architecture of the AutoPas library.
 
@@ -123,6 +123,10 @@ To eliminate the need for manual configuration selection and enable dynamic opti
 \end{figure}
 
 \subsection{Algorithm Library}
+
+\footnotetext{\label{fn:autopas}\href{https://github.com/AutoPas/AutoPas}{
+        https://github.com/AutoPas/AutoPas}}
+
 
 All different algorithmic implementations for solving N-Body problems are part of the so-called \textit{Algorithm Library} of AutoPas. The Algorithm Library contains different implementations for certain key aspects of the simulation, such as neighbor identification, traversal patterns, memory layouts, and optimization techniques. Currently, AutoPas supports the six tunable parameters: \textit{Container}, \textit{Data Layout}, \textit{Newton 3}, \textit{Traversal}, \textit{Load Estimator} and \textit{Cell Size Factor} which are combined to form a configuration.
 
