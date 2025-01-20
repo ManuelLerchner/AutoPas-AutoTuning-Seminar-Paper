@@ -1,6 +1,6 @@
 \documentclass[
-	%sans,			% use sans-serif font
-	%serif,			% use serif-font
+	% sans,			% use sans-serif font
+	% serif,			% use serif-font
 	%mathsans,		% set mathtext to sans-serif
 	%mathserif,		% set mathtext to serif
 	%10pt,
@@ -33,6 +33,14 @@
 \usepackage{pifont}% http://ctan.org/pkg/pifont
 \usepackage{appendixnumberbeamer}
 \usepackage{subcaption}
+\usepackage{tikz}
+\usepackage{pgfplots}
+
+
+\usetikzlibrary{shapes.geometric, arrows}
+\usetikzlibrary{positioning}
+\usetikzlibrary{arrows}
+\usetikzlibrary{calc}
 
 \newcommand{\xmark}{\ding{55}}%
 \newcommand{\cmark}{\ding{51}}%
@@ -76,6 +84,34 @@
 \setcounter{framenumber}{0}
 
 \section{Introduction}
+
+\begin{frame}{Molecular Dynamics Simulation Challenges}
+    \begin{itemize}
+        \item Complex interaction models
+        \item Enormous numbers of particles
+        \item High computational requirements
+        \item Need for highly optimized algorithms
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Traditional MD Engines vs AutoPas}
+    \textbf{Traditional Engines (GROMACS, LAMMPS, ls1 mardyn):}
+    \begin{itemize}
+        \item Single, highly optimized implementation
+        \item Static optimizations
+        \item Hardware-specific tuning required
+    \end{itemize}
+    \vspace{0.5cm}
+    \textbf{AutoPas Approach:}
+    \begin{itemize}
+        \item Dynamic optimizations
+        \item Adapts to simulation state
+        \item Hardware-independent
+    \end{itemize}
+\end{frame}
+
+\section{AutoPas Framework}
+
 \begin{frame}
     \frametitle{What is AutoPas?}
 
@@ -141,6 +177,174 @@
     \end{textblock*}
 \end{frame}
 
+\begin{frame}{Container Types}
+    \begin{center}
+        % \includegraphics[width=0.9\textwidth]{figures/containers.jpg}
+    \end{center}
+    \begin{itemize}
+        \item Linked Cells
+        \item Verlet Lists
+        \item Verlet Cluster Lists
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Traversal Patterns}
+    \begin{center}
+        % \includegraphics[width=0.9\textwidth]{figures/traversals.jpg}
+    \end{center}
+    \begin{itemize}
+        \item C01: Independent cell processing
+        \item C18: Color-based with Newton 3
+        \item C08: Reduced synchronization points
+    \end{itemize}
+\end{frame}
+
+\section{Auto-Tuning}
+
+\begin{frame}{Tuning Strategies}
+    \begin{itemize}
+        \item \textbf{FullSearch:} Evaluates all configurations
+        \item \textbf{RandomSearch:} Random sampling
+        \item \textbf{BayesianSearch:} Optimization-guided selection
+        \item \textbf{PredictiveTuning:} Performance prediction
+        \item \textbf{RuleBasedTuning:} Expert knowledge rules
+        \item \textbf{FuzzyTuning:} Fuzzy logic evaluation
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Benefits of Auto-Tuning}
+    \begin{itemize}
+        \item Significant performance improvements
+        \item Out-of-the-box optimization
+        \item Hardware independence
+        \item User-friendly interface
+        \item Easy integration with other frameworks
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Challenges of Auto-Tuning}
+    \begin{itemize}
+        \item Overhead from evaluating suboptimal configurations
+        \item Unnecessary periodic re-tuning
+        \item Complex scenarios needed to show benefits
+    \end{itemize}
+    \begin{center}
+        \includegraphics[width=0.8\textwidth]{figures/unnecessary-tuning-phases.png}
+    \end{center}
+\end{frame}
+
+
+
+\section{Early Stopping Optimization}
+
+
+\begin{frame}{Early Stopping Idea}
+
+    \begin{itemize}
+        \item Each configuration gets evaluated multiple times
+        \item Average performance is used for the final decision
+        \item Optimization: Abort evaluation early if performance is poor
+              \begin{itemize}
+                  \item Stop after first poor sample
+                  \item Stop during evaluation
+              \end{itemize}
+    \end{itemize}
+
+    \vspace{0.8cm}
+
+    \begin{center}
+        \begin{tikzpicture}[
+                node distance=1.2cm and 0.6cm,
+                every node/.style={draw, minimum width=1.4cm, minimum height=1.4cm, align=center},
+                thick
+            ]
+
+            % Define nodes
+            \node[fill=orange] (box1) {Config 1};
+            \node[right=of box1,fill=orange] (box2) {Config 1};
+            \node[right=of box2, style={draw=none}] (box3) {$\dots$};
+            \node[right=of box3,fill=orange] (dots) {Config 1};
+            \node[right=of dots,fill=blue!50] (boxN) {Config 2};
+
+            % Arrows connecting boxes
+            \draw[thick,<-] (box1) -- ++(-1.2,0);
+            \draw[thick,->] (box1) -- (box2);
+            \draw[thick,->] (box2) -- (box3);
+            \draw[thick,->] (box3) -- (dots);
+            \draw[thick,->] (dots) -- (boxN);
+            \draw[thick,->] (boxN) -- ++(1.2,0);
+
+            % Curly brace underneath the boxes
+            \draw[decorate, decoration={brace, amplitude=15pt, mirror}, thick]
+            ($(box1.south west) + (0,-0.2)$) -- ($(dots.south east) + (0,-0.2)$)
+            node[midway, below=5pt,draw=none] {\textit{\#samples}};
+
+
+        \end{tikzpicture}
+    \end{center}
+\end{frame}
+
+
+\begin{frame}
+    \frametitle{Implementation in AutoPas}
+
+    \begin{itemize}
+        \item Keep track of best performance seen so far
+        \item Stop resampling if current performance exceeds optimal by a certain factor
+        \item Hyperparameter: $allowedSlowdownFactor$
+
+        \item Which $allowedSlowdownFactor$ should be used?
+              \begin{itemize}
+                  \item $allowedSlowdownFactor \rightarrow 1$: Many spurious aborts
+                  \item $allowedSlowdownFactor \rightarrow \infty$: No early stopping
+              \end{itemize}
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}{Early Stopping Results [PredictiveTuning]}
+
+
+    \begin{figure}[H]
+        \centering
+
+        \includegraphics[width=\columnwidth]{../../data/explodingLiquid/cluster/predictiveTuning/analytics/total_time_average.png}
+
+        \caption{Total Simulation Time for Exploding Liquid Simulation for different values of $allowedSlowdownFactor$ using the PredictiveTuning strategy with early stopping.}
+        \label{fig:predictive_tuning}
+    \end{figure}
+
+
+\end{frame}
+
+
+\begin{frame}{Early Stopping Results Analysis}
+
+    \begin{itemize}
+        \item Reduction in total simulation time:
+              \begin{itemize}
+                  \item FullSearch: 14.8\% reduction
+                  \item PredictiveTuning: 18.9\% reduction
+              \end{itemize}
+        \item Optimal threshold around 4.5
+        \item Never significantly increased simulation time
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}{Conclusion}
+    \begin{itemize}
+        \item AutoPas offers flexible, adaptive optimization
+        \item Early stopping mechanism shows promise
+        \item Trade-off between:
+              \begin{itemize}
+                  \item Specialized static optimization
+                  \item Dynamic adaptability
+              \end{itemize}
+        \item Complementary approaches possible
+    \end{itemize}
+\end{frame}
+
 
 
 \begin{frame}
@@ -153,6 +357,9 @@
         \Huge{Questions?}
     \end{center}
 \end{frame}
+
+
+
 
 \begin{frame}[allowframebreaks, noframenumbering]
     \frametitle{References}

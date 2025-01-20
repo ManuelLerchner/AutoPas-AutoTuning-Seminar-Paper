@@ -8,7 +8,7 @@
 	\newcommand\TitlePicture{
 	}
 	\newcommand\BackgroundPicture{
-		}
+	}
 }
 \newcommand{\type}[1]{\newcommand{\inserttype}{ \ifthenelse{\equal{\lang}{de}}
 		{
@@ -117,7 +117,7 @@
 		\includegraphics[scale=0.15]{chair.png}
 		 &  & \includegraphics[scale=0.15]{tum.png}
 	\end{tabularx}
-	
+
 	\parbox{\textwidth}{\vspace{0.7mm}%
 		\textcolor{beamer@blendedblue}{\hrule}} % Obere (blaue, dünne) Linie
 
@@ -134,8 +134,6 @@
 		\medskip
 		\vspace{3ex}
 		\begin{tabular}{r}
-			\ifthenelse{\equal{\lang}{de}}{Betreuer:}{Advisors:} \\
-			{\bf\small \insertadvisorOne}                        \\
 		\end{tabular}
 
 	\end{flushright}
@@ -164,7 +162,7 @@
 {
 	\usebeamerfont*{section in head/foot}
 	\begin{beamercolorbox}[wd=\paperwidth,ht=3ex,dp=3ex,leftskip=.5em,rightskip=.5em]{background canvas}
-		
+
 		\hfill
 		\insertframenumber \ / \inserttotalframenumber
 		\hspace{2mm}
