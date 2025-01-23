@@ -64,3 +64,366 @@
   note         = {},
   url          = {}
 }
+
+@article{ModernArchitecture,
+  author = {Phillip Lewis},
+  year   = {2020},
+  title  = {Chapter 03: Modern Architectures},
+  url    = {https://slideplayer.com/slide/17041280/}
+}
+
+@article{ABRAHAM201519,
+  title    = {GROMACS: High performance molecular simulations through multi-level parallelism from laptops to supercomputers},
+  journal  = {SoftwareX},
+  volume   = {1-2},
+  pages    = {19-25},
+  year     = {2015},
+  issn     = {2352-7110},
+  doi      = {https://doi.org/10.1016/j.softx.2015.06.001},
+  url      = {https://www.sciencedirect.com/science/article/pii/S2352711015000059},
+  author   = {Mark James Abraham and Teemu Murtola and Roland Schulz and Szilárd Páll and Jeremy C. Smith and Berk Hess and Erik Lindahl},
+  keywords = {Molecular dynamics, GPU, SIMD, Free energy},
+  abstract = {GROMACS is one of the most widely used open-source and free software codes in chemistry, used primarily for dynamical simulations of biomolecules. It provides a rich set of calculation types, preparation and analysis tools. Several advanced techniques for free-energy calculations are supported. In version 5, it reaches new performance heights, through several new and enhanced parallelization algorithms. These work on every level; SIMD registers inside cores, multithreading, heterogeneous CPU–GPU acceleration, state-of-the-art 3D domain decomposition, and ensemble-level parallelization through built-in replica exchange and the separate Copernicus framework. The latest best-in-class compressed trajectory storage format is supported.}
+}
+
+@misc{autopas_issue673,
+  author       = {HobbyProgrammer},
+  title        = {Skip (or even timeout) extremely long running iterations of configurations during tuning},
+  year         = {2022},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/AutoPas/AutoPas/issues/673}},
+  note         = {Accessed: 2024-11-06}
+}
+
+
+@article{CARTEREDWARDS20143202,
+  title    = {Kokkos: Enabling manycore performance portability through polymorphic memory access patterns},
+  journal  = {Journal of Parallel and Distributed Computing},
+  volume   = {74},
+  number   = {12},
+  pages    = {3202-3216},
+  year     = {2014},
+  note     = {Domain-Specific Languages and High-Level Frameworks for High-Performance Computing},
+  issn     = {0743-7315},
+  doi      = {https://doi.org/10.1016/j.jpdc.2014.07.003},
+  url      = {https://www.sciencedirect.com/science/article/pii/S0743731514001257},
+  author   = {H. {Carter Edwards} and Christian R. Trott and Daniel Sunderland},
+  keywords = {Parallel computing, Thread parallelism, Manycore, GPU, Performance portability, Multidimensional array, Mini-application},
+  abstract = {The manycore revolution can be characterized by increasing thread counts, decreasing memory per thread, and diversity of continually evolving manycore architectures. High performance computing (HPC) applications and libraries must exploit increasingly finer levels of parallelism within their codes to sustain scalability on these devices. A major obstacle to performance portability is the diverse and conflicting set of constraints on memory access patterns across devices. Contemporary portable programming models address manycore parallelism (e.g., OpenMP, OpenACC, OpenCL) but fail to address memory access patterns. The Kokkos C++ library enables applications and domain libraries to achieve performance portability on diverse manycore architectures by unifying abstractions for both fine-grain data parallelism and memory access patterns. In this paper we describe Kokkos’ abstractions, summarize its application programmer interface (API), present performance results for unit-test kernels and mini-applications, and outline an incremental strategy for migrating legacy C++ codes to Kokkos. The Kokkos library is under active research and development to incorporate capabilities from new generations of manycore architectures, and to address a growing list of applications and domain libraries.}
+}
+
+@misc{dias2021moleculardynamicssimulationsactive,
+  title         = {Molecular Dynamics Simulations of Active Matter using LAMMPS},
+  author        = {C. S. Dias},
+  year          = {2021},
+  eprint        = {2102.10399},
+  archiveprefix = {arXiv},
+  primaryclass  = {cond-mat.soft},
+  url           = {https://arxiv.org/abs/2102.10399}
+}
+
+@mastersthesis{endreport.pdf,
+  type     = {Project Report},
+  author   = {Humig, Tobias},
+  title    = {Project Report: Exploring Performance Modeling in AutoPas},
+  year     = {2023},
+  school   = {Technical University of Munich},
+  month    = {Oct},
+  adress   = {},
+  pages    = {},
+  language = {en},
+  abstract = {The particle simulation library AutoPas implements many algorithms with vastly different performance characteristics to solve the pairwise short-range particle interactions in molecular dynamics simulations. During the simulation, it uses black-box optimization techniques to automatically select the fastest algorithm for the current state. While they are able to find good algorithms eventually, they often try highly unsuitable ones at the start due to lack of initial per- formance information. As some algorithms perform orders of magnitude worse than the optimum for a given simulation state, this has a significant negative impact on the time to solution.
+              In this project, we gather knowledge about the performance characteristics of the algorithms through theoretical modeling, profiling, and benchmarking. We make the results available through a new white-box optimization strategy that is able to apply any domain-specific knowledge during optimization. It removes those algorithms from the candidate list that likely perform worst in the current simulation state. In our tests, removing the five percent slowest algorithms reduced the tuning time by up to 80 percent while still finding the best algorithm. Furthermore, we give insights and recommendations what can be done to potentially improve the performance further.
+              },
+  keywords = {AutoPas},
+  note     = {},
+  url      = {}
+}
+
+@misc{fursin2014collectivetuninginitiative,
+  title         = {Collective Tuning Initiative},
+  author        = {Grigori Fursin},
+  year          = {2014},
+  eprint        = {1407.3487},
+  archiveprefix = {arXiv},
+  primaryclass  = {cs.DC},
+  url           = {https://arxiv.org/abs/1407.3487}
+}
+
+
+@mastersthesis{Gärtner_KokkosInAutoPas.pdf,
+  author   = {Gärtner, Ludwig},
+  title    = {Integrating Kokkos into AutoPas for hardware agnostic particle simulations},
+  year     = {2022},
+  school   = {Technical University of Munich},
+  month    = {Feb},
+  adress   = {},
+  pages    = {},
+  language = {en},
+  abstract = {AutoPas is an auto tuner for N-body simulations. Kokkos is a library that offers hardware independency through abstractions. The goal of this thesis was, an integration of Kokkos into AutoPas to improve performance portability.
+              This integration for now is limited to the KokkosLinkedCells container, which uses a central particle storage and an index based metadatastructure to link particles to cells in the simulation domain.
+              However, the implementation for this thesis was not finished to a point where it could be run on systems other than conventional multi core systems. Instead, the performance of the new KokkosLinkedCells container is compared to that of the regular LinkedCells container to determine the overhead that is introduced by this additional layer of abstraction. Overall, both containers perform very similarly in scenarios where work is evenly distributed among all threads, but the absence of algorithmic load balancing or dynamic scheduling harms the performance of the KokkosLinkedCells container in scenarios where particles are focused in one part of the simulation domain.},
+  keywords = {AutoPas;Kokkos},
+  note     = {},
+  url      = {}
+}
+
+
+@inproceedings{Gratl2019AutoPas,
+  author    = {Gratl, Fabio Alexander and Seckler, Steffen and Tchipev, Nikola and Bungartz, Hans-Joachim and Neumann, Philipp},
+  booktitle = {2019 IEEE International Parallel and Distributed Processing Symposium Workshops (IPDPSW)},
+  title     = {AutoPas: Auto-Tuning for Particle Simulations},
+  year      = {2019},
+  volume    = {},
+  number    = {},
+  pages     = {748-757},
+  keywords  = {Force;Heuristic algorithms;Computational modeling;Dynamics;Optimization;Software algorithms;Adaptation models;HPC;Molecular Dynamics;Auto-Tuning;Automatic Algorithm Selection;Dynamic Tuning},
+  doi       = {10.1109/IPDPSW.2019.00125}
+}
+
+@article{Gratl2022AutoPas,
+  title    = {N ways to simulate short-range particle systems: Automated algorithm selection with the node-level library AutoPas},
+  journal  = {Computer Physics Communications},
+  volume   = {273},
+  pages    = {108262},
+  year     = {2022},
+  issn     = {0010-4655},
+  doi      = {https://doi.org/10.1016/j.cpc.2021.108262},
+  url      = {https://www.sciencedirect.com/science/article/pii/S001046552100374X},
+  author   = {Fabio Alexander Gratl and Steffen Seckler and Hans-Joachim Bungartz and Philipp Neumann},
+  keywords = {HPC, N-body simulation, Molecular dynamics, Auto-tuning, Automatic algorithm selection, Dynamic tuning},
+  abstract = {AutoPas is an open-source C++ library delivering optimal node-level performance by providing the ideal algorithmic configuration for an arbitrary scenario in a given short-range particle simulation. It acts as a black-box container, internally implementing an extensive set of algorithms, parallelization strategies, and optimizations that are combined dynamically according to the state of the simulation via auto-tuning. This paper gives an overview of the high-level user perspective, as well as the internal view, covering the implemented techniques and features. The library is showcased by incorporating it into the codes LAMMPS and ls1 mardyn, and by investigating various applications. We further outline node-level shared-memory performance and scalability of our auto-tuning software which is comparable to LAMMPS.
+              Program summary
+              Program Title: AutoPas CPC Library link to program files: https://doi.org/10.17632/9kdb2p76hv.1 Developer's repository link: https://github.com/AutoPas/AutoPas Code Ocean capsule: https://codeocean.com/capsule/0391732 Licensing provisions: BSD 2-clause Programming language: C++17, CMake 3.14 Nature of problem: The evaluation of the short-range pairwise interactions in an N-Body simulation can be achieved using many different algorithms and parallelization techniques. Depending on the nature of the scenario, its current state, and the forces of interest, the optimal algorithm configuration can differ greatly. Choosing this optimum is a non-trivial task even for experts. Furthermore, this optimum can change over the course of a simulation. Typically, a particle simulation software only implements one algorithm for force computation and is thus specialized for a certain type of simulation. It is up to the user to choose the program suitable for his needs. Solution method: The AutoPas library implements a range of state of the art algorithms to find the relevant neighbors for the N-Body pairwise force calculation. It provides multiple shared-memory parallelization strategies using OpenMP and further algorithm optimization parameters that can all be set at run-time. A big burden for users persists in requiring the expert knowledge to pick the optimal solution procedure for a simulation. AutoPas removes this burden by tuning all aforementioned options automatically and dynamically. This way, simulation programs that make use of AutoPas give every domain scientist the possibility to make use of the most suitable algorithm configuration for arbitrary scenarios.}
+}
+
+
+@article{lammps_kokkos,
+  title         = {Speeding up LAMMPS with Kokkos},
+  journal       = {LAMMPS Documentation},
+  year          = {2024},
+  url           = {https://docs.lammps.org/Speed_kokkos.html},
+  urlaccessdate = {2024-11-10},
+  author        = {LAMMPS},
+  keywords      = {LAMMPS, Kokkos, Performance}
+}
+
+@misc{lerchner2024,
+  author = {Manuel Lerchner},
+  title  = {AutoPas Fuzzy Tuning - Bachelor Thesis},
+  year   = {2024},
+  url    = {https://github.com/ManuelLerchner/AutoPas-FuzzyTuning-Bachelor-Thesis},
+  note   = {Accessed: 2024-11-26}
+}
+
+@mastersthesis{Manuel_Lerchner_Thesis.pdf,
+  type     = {Bachelor's Thesis},
+  author   = {Lerchner, Manuel},
+  title    = {Exploring Fuzzy Tuning Technique for Molecular Dynamics Simulations in AutoPas},
+  year     = {2024},
+  school   = {Technical University of Munich},
+  month    = {Aug},
+  adress   = {},
+  pages    = {},
+  language = {en},
+  abstract = {AutoPas is a high-performance, auto-tuned particle simulation library for many-body systems, capable of dynamically switching between algorithms and data structures to guarantee optimal performance throughout the simulation.
+              This thesis introduces a novel fuzzy logic-based tuning strategy for AutoPas, allowing users to guide the tuning process by specifying custom Fuzzy Systems, which can be used to efficiently prune the search space of possible parameter configurations. Efficient tuning strategies are crucial, as they allow for discarding poor parameter configurations without evaluating them, thus reducing tuning time and improving overall library performance.
+              We demonstrate that a data-driven approach can automatically generate Fuzzy Systems that significantly outperform existing tuning strategies on specific benchmarks, resulting in speedups of up to 1.96x compared to the FullSearch Strategy on scenarios included in the training data and up to 1.35x on scenarios not directly included.
+              The Fuzzy Tuning Strategy can drastically reduce the number of evaluated configurations during tuning phases while achieving comparable tuning results, making it a promising alternative to the existing tuning strategies.
+              
+              },
+  keywords = {AutoPas; Auto-tuning; Fuzzy Logic;},
+  note     = {},
+  url      = {}
+}
+
+@mastersthesis{menges2019,
+  type     = {Bachelor's Thesis},
+  author   = {Christian Menges},
+  title    = {Optimization and Evaluation of the Linked-Cell Algorithm},
+  year     = {2019},
+  school   = {Technical University of Munich},
+  month    = {Aug},
+  language = {en},
+  abstract = {The Linked-Cell algorithm is used as an underlying data structure in Molecular dynamics simulations to store and organize particles. It allows us to quickly find neighbors of a particle within a given radius without checking all stored particles, which is necessary to effectively simulate short-range interactions. In this thesis, four different approaches for faster neighbor search and improved SIMD performance are presented and evaluated. First of all, the variation of the cell size is discussed, continuing with two schemes to combine multiple cells to maximize their performance using Single Instruction, Multiple Data operations. Further, the reduction of search space for possible neighbors using sorted cells is discussed. The last chapter deals with an outlook on adaptive approaches which allows a combination of different cell sizes and sorted cells. All these techniques show a performance improvement depending on the characteristics of the simulated experiment, especially on the density of particles and their distribution inside the domain.
+              },
+  keywords = {molecular-dynamics;numerical simulation}
+}
+
+@article{NEWCOME2023115278,
+  title    = {Towards auto-tuning Multi-Site Molecular Dynamics simulations with AutoPas},
+  journal  = {Journal of Computational and Applied Mathematics},
+  volume   = {433},
+  pages    = {115278},
+  year     = {2023},
+  issn     = {0377-0427},
+  doi      = {https://doi.org/10.1016/j.cam.2023.115278},
+  url      = {https://www.sciencedirect.com/science/article/pii/S0377042723002224},
+  author   = {Samuel James Newcome and Fabio Alexander Gratl and Philipp Neumann and Hans-Joachim Bungartz},
+  keywords = {Molecular Dynamics, High performance computing, Auto-tuning, AutoPas, Multi-Site Molecular Dynamics},
+  abstract = {There exists an extensive literature of algorithms for short-range pairwise interactions in particle simulations, however, there is no single algorithm that performs the most optimally in every scenario, motivating the use of auto-tuning to select the optimal pairwise interaction algorithm. Previous efforts to auto-tune Molecular Dynamics have focused on Single-Site Molecular Dynamics, where the computational cost for the intermolecular force calculation is constant. Alternatively, for Multi-Site Molecular Dynamics, the cost of this calculation varies with the number of sites, which, as we show in this paper, can result in different optimal algorithms. Despite this further benefit for auto-tuning, it has yet to be applied to Multi-Site Molecules. In this paper, we introduce an implementation of Multi-Site Molecular Dynamics that is integrated with AutoPas. Using this implementation, we analyse how the relative performance between these algorithms varies as the number of sites varies, for both homogeneous and heterogeneous molecule distributions, and for two different hardware. Furthermore, we demonstrate the advantage of auto-tuning in the context of Multi-Site Molecular Dynamics using the node-level short-range particle simulation library, AutoPas.}
+}
+
+@mastersthesis{njan_master,
+  author   = {Nguyen, Jan},
+  title    = {Mixed discrete-continuous Bayesian Optimization for AutoTuning},
+  year     = {2020},
+  school   = {Technical University of Munich},
+  month    = {Oct},
+  language = {en},
+  abstract = {Molecular dynamics simulations are used to analyze physical motion at the molecular level. A numerical approach is often used, where we assume that for small time intervals, the acting force remains constant. So we calculate the trajectory of each particle step by step by repeatedly using this assumption. In each of these steps, we have to calculate the pairwise forces between all particles. Due to this, simulations with a high number of particles could take a considerable amount of time, since every particle exert forces on every other particle. However, there are many different algorithms and corresponding parameters to calculate these forces efficiently. Which combination of parameters is most effective depends on the structure of the simulation and is generally hard to predict. To avoid having to test every combination, we use Bayesian optimization, which should give us a good result with only a few tests. Since we have discrete and continuous parameters typical Bayesian optimization can only be used to a limited extent. This is why we are testing an approach where we consider discrete values using a cluster model. As a result, we were able to observe significant improvements compared to other methods. We were often able to make an optimal selection automatically. A person would need sufficient expert knowledge to make a similarly efficient choice.
+              },
+  keywords = {AutoPas, Molecular Dynamics, AutoTuning}
+}
+
+@article{PALL20132641,
+  title    = {A flexible algorithm for calculating pair interactions on SIMD architectures},
+  journal  = {Computer Physics Communications},
+  volume   = {184},
+  number   = {12},
+  pages    = {2641-2650},
+  year     = {2013},
+  issn     = {0010-4655},
+  doi      = {https://doi.org/10.1016/j.cpc.2013.06.003},
+  url      = {https://www.sciencedirect.com/science/article/pii/S0010465513001975},
+  author   = {Szilárd Páll and Berk Hess},
+  keywords = {Pair interactions, SIMD, GPU, Molecular dynamics, Verlet list},
+  abstract = {Calculating interactions or correlations between pairs of particles is typically the most time-consuming task in particle simulation or correlation analysis. Straightforward implementations using a double loop over particle pairs have traditionally worked well, especially since compilers usually do a good job of unrolling the inner loop. In order to reach high performance on modern CPU and accelerator architectures, single-instruction multiple-data (SIMD) parallelization has become essential. Avoiding memory bottlenecks is also increasingly important and requires reducing the ratio of memory to arithmetic operations. Moreover, when pairs only interact within a certain cut-off distance, good SIMD utilization can only be achieved by reordering input and output data, which quickly becomes a limiting factor. Here we present an algorithm for SIMD parallelization based on grouping a fixed number of particles, e.g. 2, 4, or 8, into spatial clusters. Calculating all interactions between particles in a pair of such clusters improves data reuse compared to the traditional scheme and results in a more efficient SIMD parallelization. Adjusting the cluster size allows the algorithm to map to SIMD units of various widths. This flexibility not only enables fast and efficient implementation on current CPUs and accelerator architectures like GPUs or Intel MIC, but it also makes the algorithm future-proof. We present the algorithm with an application to molecular dynamics simulations, where we can also make use of the effective buffering the method introduces.}
+}
+
+@mastersthesis{Papula2020,
+  type     = {Bachelor's Thesis},
+  author   = {Papula, Marco},
+  title    = {Implementing the Linked Cell Algorithm in AutoPas using References},
+  year     = {2020},
+  school   = {Technical University of Munich},
+  month    = {Sep},
+  language = {en},
+  abstract = {AutoPas is an open-source library implemented in C++ that provides a variety of Molecular Dynamics (MD) algorithms optimized for most modern hardware. The library supports auto-tuning, meaning the library will periodically evaluate the whole domain and if another algorithm is expected to increase performance, switch containers accordingly. This process currently involves copying every particle in the domain into a new container, cancelling out some if not all of the performance gained from switching containers. This thesis describes a proof of concept implementation of the Linked Cells container, whose cells operate on references with the actual particles being stored in another structure. The thesis demonstrates
+              the correctness of the implementation and gives a rough estimate of its performance.},
+  keywords = {AutoPas}
+}
+
+@mastersthesis{pelloth2020,
+  type     = {Bachelor's Thesis},
+  author   = {Julian Mark Pelloth},
+  title    = {Implementing a predictive tuning strategy in AutoPas using extrapolation},
+  year     = {2020},
+  school   = {Technical University of Munich},
+  month    = {Sep},
+  language = {en},
+  abstract = {The AutoPas library is capable of simulating computationally intensive molecular dynamic
+              simulations. To reduce the run time, it provides many configurations to select the fastest
+              for the specific scenario. AutoPas tries to achieve this task by testing the hole search space frequently. In this thesis, a new approach is implemented that uses extrapolation to predict
+              the efficiency and only tests the best predictions to avoid inefficient configurations. The predicting strategy can reduce the run time by up to 74%.},
+  keywords = {molecular-dynamics;numerical simulation}
+}
+
+
+
+@phdthesis{Seckler2021,
+  author   = {Seckler, Steffen},
+  title    = {Algorithm and Performance Engineering for HPC Particle Simulations},
+  year     = {2021},
+  school   = {Technische Universität München},
+  pages    = {144},
+  language = {en},
+  abstract = {Particle simulations often require the use of HPC architectures for which N-body codes need to be adapted to allow faster executions and bigger simulations, thus decreasing the time to get simulation results or enabling more accurate simulations.
+              I employ algorithm and performance engineering to improve the performance, scalability, and load balancing of the MD code ls1 mardyn.
+              These improvements resulted in speedups of more than 3x for real-world scenarios and up to 130x for benchmark problems.},
+  keywords = {},
+  note     = {},
+  url      = {https://mediatum.ub.tum.de/1616999}
+}
+
+@article{SECKLER2021101296,
+  title    = {AutoPas in ls1 mardyn: Massively parallel particle simulations with node-level auto-tuning},
+  journal  = {Journal of Computational Science},
+  volume   = {50},
+  pages    = {101296},
+  year     = {2021},
+  issn     = {1877-7503},
+  doi      = {https://doi.org/10.1016/j.jocs.2020.101296},
+  url      = {https://www.sciencedirect.com/science/article/pii/S1877750320305901},
+  author   = {Steffen Seckler and Fabio Gratl and Matthias Heinen and Jadran Vrabec and Hans-Joachim Bungartz and Philipp Neumann},
+  keywords = {AutoPas, ls1 mardyn, Molecular dynamics, Particle simulations, MPI, Auto-tuning},
+  abstract = {Due to computational cost, simulation software is confronted with the need to always use optimal building blocks — data structures, solver algorithms, parallelization schemes, and so forth — in terms of efficiency, while it typically needs to support a variety of hardware architectures. AutoPas implements the computationally most expensive molecular dynamics (MD) steps (e.g., force calculation) and chooses on-the-fly, i.e., at run time, the optimal combination of the previously mentioned building blocks. We detail decisions made in AutoPas to enable the interplay with MPI-parallel simulations and, to our knowledge, showcase the first MPI-parallel MD simulations that use dynamic tuning. We discuss the benefits of this approach for three simulation scenarios from process engineering, in which we obtain performance improvements of up to 50%, compared to the baseline performance of the highly optimized ls1 mardyn software.}
+}
+
+
+@article{seckler2021autopas,
+  author  = {Seckler, Steffen and Gratl, Fabio and Heinen, Matthias and Vrabec, Jadran and Bungartz, Hans-Joachim and Neumann, Philipp},
+  year    = {2021},
+  month   = {01},
+  pages   = {101296},
+  title   = {AutoPas in ls1 mardyn: Massively Parallel Particle Simulations with Node-Level Auto-Tuning},
+  volume  = {50},
+  journal = {Journal of Computational Science},
+  doi     = {10.1016/j.jocs.2020.101296}
+}
+
+@proceedings{Solving_Software_Challenges_Exascale_2014,
+  title     = {Solving Software Challenges for Exascale},
+  booktitle = {International Conference on Exascale Applications and Software (EASC 2014)},
+  year      = {2015},
+  address   = {Stockholm, Sweden},
+  date      = {2014-04-02/2014-04-03},
+  publisher = {Springer},
+  note      = {Revised Selected Papers}
+}
+
+
+@article{tchipev2019twe,
+  author   = {Nikola Tchipev and Steffen Seckler and Matthias Heinen and Jadran Vrabec and Fabio Gratl and Martin Horsch and Martin Bernreuther and Colin W Glass and Christoph Niethammer and Nicolay Hammer and Bernd Krischok and Michael Resch and Dieter Kranzlmüller and Hans Hasse and Hans-Joachim Bungartz and Philipp Neumann},
+  title    = {TweTriS: Twenty trillion-atom simulation},
+  journal  = {The International Journal of High Performance Computing Applications},
+  volume   = {33},
+  number   = {5},
+  pages    = {838-854},
+  year     = {2019},
+  doi      = {10.1177/1094342018819741},
+  url      = { 
+              
+              https://doi.org/10.1177/1094342018819741
+              
+              
+              
+              },
+  eprint   = { 
+              
+              https://doi.org/10.1177/1094342018819741
+              
+              
+              
+              },
+  abstract = { Significant improvements are presented for the molecular dynamics code ls1 mardyn — a linked cell-based code for simulating a large number of small, rigid molecules with application areas in chemical engineering. The changes consist of a redesign of the SIMD vectorization via wrappers, MPI improvements and a software redesign to allow memory-efficient execution with the production trunk to increase portability and extensibility. Two novel, memory-efficient OpenMP schemes for the linked cell-based force calculation are presented, which are able to retain Newton’s third law optimization. Comparisons to well-optimized Verlet list-based codes, such as LAMMPS and GROMACS, demonstrate the viability of the linked cell-based approach. The present version of ls1 mardyn is used to run simulations on entire supercomputers, maximizing the number of sampled atoms. Compared to the preceding version of ls1 mardyn on the entire set of 9216 nodes of SuperMUC, Phase 1, 27\% more atoms are simulated. Weak scaling performance is increased by up to 40\% and strong scaling performance by up to more than 220\%. On Hazel Hen, strong scaling efficiency of up to 81\% and 189 billion molecule updates per second is attained, when scaling from 8 to 7168 nodes. Moreover, a total of 20 trillion atoms is simulated at up to 88\% weak scaling efficiency running at up to 1.33 PFLOPS. This represents a fivefold increase in terms of the number of atoms simulated to date. }
+}
+
+
+@phdthesis{Tchipev2020,
+  author   = {Tchipev, Nikola Plamenov},
+  title    = {Algorithmic and Implementational Optimizations of Molecular Dynamics Simulations for Process Engineering},
+  year     = {2020},
+  school   = {Technische Universität München},
+  pages    = {189},
+  language = {en},
+  abstract = {The focus of this work lies on implementational improvements and, in particular, node-level performance optimization of the simulation software ls1-mardyn. Through data structure improvements, SIMD vectorization and, especially, OpenMP parallelization, the world’s first simulation of 2*10<sup>13</sup> molecules at over 1 PFLOP/sec was enabled. To allow for long-range interactions, the Fast Multipole Method was introduced to ls1-mardyn. The algorithm was optimized for sequential, shared-memory, and distributed-memory execution on up to 32,768 MPI processes.},
+  keywords = {molecular dynamics, node-level performance, OpenMP, Fast Multipole Method},
+  note     = {},
+  url      = {https://mediatum.ub.tum.de/1524715}
+}
+
+@article{THOMPSON2022108171,
+  title    = {LAMMPS - a flexible simulation tool for particle-based materials modeling at the atomic, meso, and continuum scales},
+  year     = {2022},
+  doi      = {https://doi.org/10.1016/j.cpc.2021.108171},
+  url      = {https://www.sciencedirect.com/science/article/pii/S0010465521002836},
+  author   = {Aidan P. Thompson and H. Metin Aktulga and Richard Berger and Dan S. Bolintineanu and W. Michael Brown and Paul S. Crozier and Pieter J. {in 't Veld} and Axel Kohlmeyer and Stan G. Moore and Trung Dac Nguyen and Ray Shan and Mark J. Stevens and Julien Tranchida and Christian Trott and Steven J. Plimpton},
+  keywords = {Molecular dynamics, Materials modeling, Parallel algorithms, LAMMPS},
+  abstract = {Since the classical molecular dynamics simulator LAMMPS was released as an open source code in 2004, it has become a widely-used tool for particle-based modeling of materials at length scales ranging from atomic to mesoscale to continuum. Reasons for its popularity are that it provides a wide variety of particle interaction models for different materials, that it runs on any platform from a single CPU core to the largest supercomputers with accelerators, and that it gives users control over simulation details, either via the input script or by adding code for new interatomic potentials, constraints, diagnostics, or other features needed for their models. As a result, hundreds of people have contributed new capabilities to LAMMPS and it has grown from fifty thousand lines of code in 2004 to a million lines today. In this paper several of the fundamental algorithms used in LAMMPS are described along with the design strategies which have made it flexible for both users and developers. We also highlight some capabilities recently added to the code which were enabled by this flexibility, including dynamic load balancing, on-the-fly visualization, magnetic spin dynamics models, and quantum-accuracy machine learning interatomic potentials.
+              Program Summary
+              Program Title: Large-scale Atomic/Molecular Massively Parallel Simulator (LAMMPS) CPC Library link to program files: https://doi.org/10.17632/cxbxs9btsv.1 Developer's repository link: https://github.com/lammps/lammps Licensing provisions: GPLv2 Programming language: C++, Python, C, Fortran Supplementary material: https://www.lammps.org Nature of problem: Many science applications in physics, chemistry, materials science, and related fields require parallel, scalable, and efficient generation of long, stable classical particle dynamics trajectories. Within this common problem definition, there lies a great diversity of use cases, distinguished by different particle interaction models, external constraints, as well as timescales and lengthscales ranging from atomic to mesoscale to macroscopic. Solution method: The LAMMPS code uses parallel spatial decomposition, distributed neighbor lists, and parallel FFTs for long-range Coulombic interactions [1]. The time integration algorithm is based on the Størmer-Verlet symplectic integrator [2], which provides better stability than higher-order non-symplectic methods. In addition, LAMMPS supports a wide range of interatomic potentials, constraints, diagnostics, software interfaces, and pre- and post-processing features. Additional comments including restrictions and unusual features: This paper serves as the definitive reference for the LAMMPS code.
+              References
+              [1]S. Plimpton, Fast parallel algorithms for short-range molecular dynamics. J. Comp. Phys. 117 (1995) 1–19.[2]L. Verlet, Computer experiments on classical fluids: I. Thermodynamical properties of Lennard–Jones molecules, Phys. Rev. 159 (1967) 98–103.}
+}

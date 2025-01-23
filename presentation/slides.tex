@@ -10,17 +10,17 @@
 	%slidescentered,% center text on slide
 	%draft,			% compile as draft version
 	%handout,		% create handout file
-	%notes,			% include nodes in slides
+	% notes,			% include nodes in slides
 	%compress		% compress navigation bar
 ]{beamer}
 
 \usetheme{lmtslides}
 \usepackage{eso-pic}
 \usepackage{graphicx}
-%\usepackage[pdftex]{color}
+% \usepackage[pdftex]{color}
 \usepackage{times}
 \usepackage[latin1]{inputenc}
-%\usepackage[T1]{fontenc}
+\usepackage[T1]{fontenc}
 \usepackage[amssymb]{SIunits}
 \usepackage{amsmath,amssymb}
 \usepackage{eurosym}
@@ -35,6 +35,10 @@
 \usepackage{subcaption}
 \usepackage{tikz}
 \usepackage{pgfplots}
+\usepackage{multimedia}
+\usepackage{media9}
+\addmediapath{figures/}
+
 
 
 \usetikzlibrary{shapes.geometric, arrows}
@@ -85,29 +89,201 @@
 
 \section{Introduction}
 
-\begin{frame}{Molecular Dynamics Simulation Challenges}
+\begin{frame}{Software Challenges in Molecular Dynamics}
     \begin{itemize}
-        \item Complex interaction models
         \item Enormous numbers of particles
-        \item High computational requirements
-        \item Need for highly optimized algorithms
+              \begin{itemize}
+                  \item naively: $\mathcal{O}(N^2)$ interactions
+              \end{itemize}
+        \item Complex interaction models
+        \item Solution: highly optimized algorithms
+              \begin{itemize}
+                  \item Make full use of hardware
+                  \item Smart data structures
+              \end{itemize}
+    \end{itemize}
+
+
+
+    \begin{textblock*}{4.5cm}(7cm,5.2cm)
+        \begin{center}
+            \includegraphics[width=\textwidth]{figures/rayleigh_taylor_instability_3d.png}
+        \end{center}
+    \end{textblock*}
+
+    \begin{textblock*}{5cm}(1cm,8cm)
+        \begin{center}
+
+            $E_{ijk} = v \frac{1 + 3 \cos(\theta_i) \cos(\theta_j) \cos(\theta_k)}{(r_{ij} r_{jk} r_{ik})^3}$\\
+            \vspace{0.2cm}
+            \tiny{Axilrod-Teller Potential}
+        \end{center}
+    \end{textblock*}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Background: Particle Containers Optimization}
+
+    \begin{itemize}
+        \item How to identify interacting particles?
+        \item Short-range forces allow for cutoff radius $\rightarrow$ $\mathcal{O}(N)$ interactions
+        \item Different implementations possible
+              \begin{itemize}
+                  \item Unfortunately: No silver bullet
+              \end{itemize}
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.75\textwidth]{figures/particle_containers.png}
+        \caption{\small{
+                \cite{SIAM_PP24}}}
+    \end{figure}
+
+
+\end{frame}
+
+\begin{frame}{Background: Traversal Patterns}
+    \begin{itemize}
+        \item How to calculate forces in parallel?
+        \item Different traversal patterns possible
+        \item Each pattern has different performance characteristics
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.75\textwidth]{figures/traversals.jpg}
+        \caption{\small{\cite{NEWCOME2023115278}}}
+    \end{figure}
+
+
+
+\end{frame}
+
+
+\begin{frame}{Background: Data Layouts}
+    \begin{itemize}
+        \item How to store particle data in memory?
+        \item SoA
+              \begin{itemize}
+                  \item Easy SIMD manipulation
+              \end{itemize}
+        \item AoS
+              \begin{itemize}
+                  \item Efficient full particle access
+              \end{itemize}
+
+    \end{itemize}
+
+    \vspace{0.2cm}
+    \begin{figure}
+        \centering
+        \includegraphics[width=1\textwidth]{figures/data_layout.png}
+        \caption{\small{\cite{ModernArchitecture}}}
+    \end{figure}
+
+
+\end{frame}
+
+\begin{frame}{Background: Newton 3 Optimization}
+    \begin{itemize}
+        \item How to optimize force calculations?
+        \item Newton 3: Forces are equal and opposite
+        \item Reuse calculated forces also in other directions
+        \item But: Can lead to race conditions
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Traditional MD Engines vs AutoPas}
-    \textbf{Traditional Engines (GROMACS, LAMMPS, ls1 mardyn):}
+
+\begin{frame}
+    \frametitle{Which Combination to Choose?}
     \begin{itemize}
-        \item Single, highly optimized implementation
-        \item Static optimizations
-        \item Hardware-specific tuning required
+        \item Remember: No silver bullet!
     \end{itemize}
-    \vspace{0.5cm}
-    \textbf{AutoPas Approach:}
+    \begin{center}
+
+
+        \begin{tikzpicture}[
+                node distance=1cm,
+                thick,
+                every node/.style={
+                        draw,
+                        ellipse,
+                        minimum width=1.8cm,
+                        minimum height=4cm,
+                        align=center
+                    },
+                textnode/.style={
+                        draw=none,
+                        align=center
+                    }
+            ]
+
+            % Nodes with colors
+            \node[fill=blue!30] (A) {LC\\VL\\VCL\\ \vdots};
+            \node[fill=red!30, right=of A] (B) {C01\\C18\\C08\\ \vdots};
+            \node[fill=green!30, right=of B] (C) {SoA\\AoS};
+            \node[fill=yellow!30, right=of C] (D) {On\\Off};
+
+            % Text underneath ellipses with matching colors
+            \node[textnode, below=-1cm of A, ] (Atext) {Container};
+            \node[textnode, below=-1cm of B, ] (Btext) {Traversal};
+            \node[textnode, below=-1cm of C, ] (Ctext) {Data Layout};
+            \node[textnode, below=-1cm of D, ] (Dtext) {Newton 3};
+
+            % Crosses between the nodes
+            \draw[->, draw=none] (A) -- (B) node[midway, draw=none] {$\times$};
+            \draw[->, draw=none] (B) -- (C) node[midway, draw=none] {$\times$};
+            \draw[->, draw=none] (C) -- (D) node[midway, draw=none] {$\times$};
+
+        \end{tikzpicture}
+    \end{center}
+
+
+\end{frame}
+
+
+
+\begin{frame}{Traditional MD Engines}
+
+
+    \begin{textblock*}{3.5cm}(8.5cm,2.2cm)
+        \includegraphics[width=3.5cm]{figures/gromacs-logo.png}
+    \end{textblock*}
+    \begin{textblock*}{3.5cm}(8.5cm,4cm)
+        \includegraphics[width=3.5cm]{figures/lammps-logo.png}
+    \end{textblock*}
+    \begin{textblock*}{3cm}(8.5cm,5.3cm)
+        \begin{center}
+
+            \includegraphics[width=1.5cm]{figures/ls1-logo.png}
+        \end{center}
+    \end{textblock*}
+
+
     \begin{itemize}
-        \item Dynamic optimizations
-        \item Adapts to simulation state
-        \item Hardware-independent
+        \item Based on a single container type
+              \begin{itemize}
+                  \item GROMACS: Verlet Cluster List
+                  \item LAMMPS: Verlet List
+                  \item ls1 mardyn: Linked Cells
+              \end{itemize}
+        \item Performance through:
+              \begin{itemize}
+                  \item Hardware aware SIMD vectorization
+                  \item Memory layout optimization
+                  \item Manual tuning to target hardware
+              \end{itemize}
+        \item Drawbacks:
+              \begin{itemize}
+                  \item Suboptimal for some scenarios / states
+                  \item Manual tuning effort
+              \end{itemize}
     \end{itemize}
+
 \end{frame}
 
 \section{AutoPas Framework}
@@ -121,115 +297,113 @@
 
     \begin{itemize}
         \item Library for arbitrary N-body simulations
-        \item Optimal performance by switching implementations
+        \item Implements all algorithms
+        \item Idea: Switch between algorithms
               \begin{itemize}
-                  \item \textbf{Container:} Finding neighboring particles
-                  \item \textbf{Traversal:} Parallel force calculations
-                  \item \textbf{Data Layout:} Memory access optimization
-                  \item \textbf{Newton 3:} Force calculation optimization
+                  \item[$\rightarrow$] Guarantee optimal performance
               \end{itemize}
-    \end{itemize}
 
-    \vspace{-0.1cm}
-    \begin{figure}
-        \centering
-        \includegraphics[width=0.72\textwidth]{figures/traversals.png}
-    \end{figure}
-
-    \begin{textblock*}{5cm}(6.3cm,9.35cm)
-        \tiny{\cite{SIAM_PP24}}
-    \end{textblock*}
-
-\end{frame}
-
-
-\begin{frame}
-    \frametitle{Structure of AutoPas}
-
-    \begin{itemize}
-        \item Three main areas:
-              \begin{itemize}
-                  \item User Application
-                  \item Algorithm Library
-                  \item Tuning Strategies
-              \end{itemize}
-        \item Algorithm Library:
-              \begin{itemize}
-                  \item Huge Search Space\footnote{\scriptsize{$\text{Container}\times\text{Traversal} \times \text{Data Layout} \times \text{Newton 3} \times \text{Load Estimator} \times \text{Cell Size Factor}$}
-                        }
-              \end{itemize}
         \item Tuning Strategies:
               \begin{itemize}
-                  \item Full Search
-                  \item Random Search
-                  \item Predictive Tuning
-                  \item Bayesian Search
-                  \item Rule Based Tuning
+                  \item Find optimal configuration
+                  \item Different strategies available
               \end{itemize}
     \end{itemize}
 
-    \begin{textblock*}{4cm}(8cm,2cm)
+    \begin{textblock*}{4cm}(8.2cm,3cm)
         \begin{figure}
             \includegraphics[width=4cm]{figures/AutoPasLibraryStructure.png}
             \caption{ \scriptsize{\cite{Newcome2023Poster}}}
 
         \end{figure}
     \end{textblock*}
+
 \end{frame}
 
-\begin{frame}{Container Types}
+
+
+\section{Auto-Tuning in AutoPas}
+
+\begin{frame}
+    \frametitle{Auto-Tuning in AutoPas}
+
+    \begin{itemize}
+        \item Divide simulation into Tuning- and Simulation-Phase
+        \item Tuning-Phase:
+              \begin{itemize}
+                  \item Tuning Strategies suggest configurations
+                  \item Measure promising configurations
+                  \item Choose best configuration
+              \end{itemize}
+    \end{itemize}
+
     \begin{center}
-        % \includegraphics[width=0.9\textwidth]{figures/containers.jpg}
+        \includegraphics[width=1\textwidth]{figures/timing.png}
     \end{center}
-    \begin{itemize}
-        \item Linked Cells
-        \item Verlet Lists
-        \item Verlet Cluster Lists
-    \end{itemize}
 \end{frame}
 
-\begin{frame}{Traversal Patterns}
+\begin{frame}
+    \frametitle{Tuning Strategies}
+
     \begin{center}
-        % \includegraphics[width=0.9\textwidth]{figures/traversals.jpg}
+
+        {\footnotesize
+
+            \begin{tikzpicture}[
+                    level distance=1.5cm,
+                    level 1/.style={sibling distance=3.6cm},
+                    level 2/.style={sibling distance=2.1cm},
+                    every node/.style={align=center, rounded corners, draw, fill=white, minimum height=0.6cm},
+                    edge from parent/.style={thick, draw=gray}
+                ]
+                \node[fill=gray!20]{Tuning Strategies}
+                child{
+                        node[]{Exploration-based}
+                        child{node[fill=blue!10]{FullSearch}}
+                        child{node[fill=blue!10]{RandomSearch}
+                                child{node[fill=blue!10]{BayesianSearch}}
+                            }
+                    }
+                child{
+                        node[]{Performance-based}
+                        child{node[fill=green!10]{PredictiveTuning}}
+                    }
+                child{
+                        node[]{Knowledge-based}
+                        child{node[fill=red!10]{RuleBased}}
+                        child{node[fill=red!10]{FuzzyTuning}}
+                    };
+            \end{tikzpicture}
+
+        }
     \end{center}
-    \begin{itemize}
-        \item C01: Independent cell processing
-        \item C18: Color-based with Newton 3
-        \item C08: Reduced synchronization points
-    \end{itemize}
-\end{frame}
 
-\section{Auto-Tuning}
-
-\begin{frame}{Tuning Strategies}
-    \begin{itemize}
-        \item \textbf{FullSearch:} Evaluates all configurations
-        \item \textbf{RandomSearch:} Random sampling
-        \item \textbf{BayesianSearch:} Optimization-guided selection
-        \item \textbf{PredictiveTuning:} Performance prediction
-        \item \textbf{RuleBasedTuning:} Expert knowledge rules
-        \item \textbf{FuzzyTuning:} Fuzzy logic evaluation
-    \end{itemize}
 \end{frame}
 
 \begin{frame}{Benefits of Auto-Tuning}
     \begin{itemize}
-        \item Significant performance improvements
-        \item Out-of-the-box optimization
-        \item Hardware independence
-        \item User-friendly interface
-        \item Easy integration with other frameworks
+        \item Optimal configuration
+              \begin{itemize}
+                  \item for every scenario
+                  \item for every hardware
+                  \item throughout the simulation
+              \end{itemize}
+        \item Shown to improve performance in various scenarios
+        \item No manual tuning effort
+        \item AutoPas: Optimal Black-Box for N-body simulations
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Challenges of Auto-Tuning}
+\begin{frame}{Problems of Auto-Tuning}
     \begin{itemize}
         \item Overhead from evaluating suboptimal configurations
+              \begin{itemize}
+                  \item Orders of magnitude slower!
+              \end{itemize}
         \item Unnecessary periodic re-tuning
-        \item Complex scenarios needed to show benefits
     \end{itemize}
     \begin{center}
-        \includegraphics[width=0.8\textwidth]{figures/unnecessary-tuning-phases.png}
+        \includegraphics[width=0.82\textwidth]{figures/unnecessary-tuning-phases.png}
     \end{center}
 \end{frame}
 
@@ -242,8 +416,8 @@
 
     \begin{itemize}
         \item Each configuration gets evaluated multiple times
-        \item Average performance is used for the final decision
-        \item Optimization: Abort evaluation early if performance is poor
+        \item Optimization: Abort resampling early if performance is poor
+        \item Two possible strategies:
               \begin{itemize}
                   \item Stop after first poor sample
                   \item Stop during evaluation
@@ -280,17 +454,24 @@
             node[midway, below=5pt,draw=none] {\textit{\#samples}};
 
 
+
         \end{tikzpicture}
     \end{center}
 \end{frame}
 
 
 \begin{frame}
-    \frametitle{Implementation in AutoPas}
+    \frametitle{Naive Early Stopping}
 
     \begin{itemize}
-        \item Keep track of best performance seen so far
-        \item Stop resampling if current performance exceeds optimal by a certain factor
+        \item Changes to AutoPas are minimal
+              \begin{itemize}
+                  \item Keep track of best performance seen so far
+                  \item $slowdownFactor = \frac{t_{\text{sample}}}{t_{\text{best}}}$
+                  \item Call \texttt{retune()} if $slowdownFactor$ exceeds threshold
+              \end{itemize}
+
+
         \item Hyperparameter: $allowedSlowdownFactor$
 
         \item Which $allowedSlowdownFactor$ should be used?
@@ -301,47 +482,60 @@
     \end{itemize}
 \end{frame}
 
+\begin{frame}{Benchmark: Exploding Liquid + PredictiveTuning}
 
-\begin{frame}{Early Stopping Results [PredictiveTuning]}
+    \begin{itemize}
+        \item Optimal at $allowedSlowdownFactor = 5$
+        \item From 28.6s to 23.2s
+              \begin{itemize}
+                  \item[$\rightarrow$] 18.9\% reduction
+              \end{itemize}
+    \end{itemize}
 
 
     \begin{figure}[H]
         \centering
 
-        \includegraphics[width=\columnwidth]{../../data/explodingLiquid/cluster/predictiveTuning/analytics/total_time_average.png}
+        \includegraphics[width=0.92\columnwidth]{../../data/explodingLiquid/cluster/predictiveTuning/analytics/total_time_average_full_scale.png}
 
-        \caption{Total Simulation Time for Exploding Liquid Simulation for different values of $allowedSlowdownFactor$ using the PredictiveTuning strategy with early stopping.}
-        \label{fig:predictive_tuning}
+
     \end{figure}
-
 
 \end{frame}
 
 
-\begin{frame}{Early Stopping Results Analysis}
+\begin{frame}{Early Stopping Insights}
 
     \begin{itemize}
-        \item Reduction in total simulation time:
+        \item Should be combined with good tuning strategy
+        \item Never increased simulation time
+        \item $allowedSlowdownFactor$ probably not universal
+        \item Future work needed
               \begin{itemize}
-                  \item FullSearch: 14.8\% reduction
-                  \item PredictiveTuning: 18.9\% reduction
+                  \item More benchmarks
+                  \item Improved early stopping mechanism
+                  \item Investigate other stopping criteria
               \end{itemize}
-        \item Optimal threshold around 4.5
-        \item Never significantly increased simulation time
     \end{itemize}
 \end{frame}
 
 
-\begin{frame}{Conclusion}
+\begin{frame}{Summary}
     \begin{itemize}
-        \item AutoPas offers flexible, adaptive optimization
-        \item Early stopping mechanism shows promise
-        \item Trade-off between:
+        \item Many algorithmic choices in MD simulations
               \begin{itemize}
-                  \item Specialized static optimization
-                  \item Dynamic adaptability
+                  \item No silver bullet!
               \end{itemize}
-        \item Complementary approaches possible
+        \item AutoPas: Optimal Black-Box for N-body simulations
+              \begin{itemize}
+                  \item Auto-Tuning very beneficial
+                  \item But: Overhead from tuning
+              \end{itemize}
+        \item Early Stopping Optimization
+              \begin{itemize}
+                  \item Minimal changes to AutoPas
+                  \item Promising improvements
+              \end{itemize}
     \end{itemize}
 \end{frame}
 
@@ -370,14 +564,6 @@
 
 \appendix
 
-\begin{frame}
-    \frametitle{Backup:}
-
-    \begin{itemize}
-        \item A
-        \item B
-    \end{itemize}
-\end{frame}
 
 
 
