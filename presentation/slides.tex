@@ -95,43 +95,35 @@
               \begin{itemize}
                   \item naively: $\mathcal{O}(N^2)$ interactions
               \end{itemize}
-        \item Complex interaction models
         \item Solution: highly optimized algorithms
               \begin{itemize}
                   \item Make full use of hardware
                   \item Smart data structures
               \end{itemize}
+        \item Every millisecond counts
     \end{itemize}
 
 
 
-    \begin{textblock*}{4.5cm}(7cm,5.2cm)
+    \begin{textblock*}{4.5cm}(7cm,5cm)
         \begin{center}
             \includegraphics[width=\textwidth]{figures/rayleigh_taylor_instability_3d.png}
         \end{center}
     \end{textblock*}
 
-    \begin{textblock*}{5cm}(1cm,8cm)
-        \begin{center}
 
-            $E_{ijk} = v \frac{1 + 3 \cos(\theta_i) \cos(\theta_j) \cos(\theta_k)}{(r_{ij} r_{jk} r_{ik})^3}$\\
-            \vspace{0.2cm}
-            \tiny{Axilrod-Teller Potential}
-        \end{center}
-    \end{textblock*}
 
 \end{frame}
 
+\section{Background MD Algorithms}
+
 \begin{frame}
-    \frametitle{Background: Particle Containers Optimization}
+    \frametitle{Example: Particle Container}
 
     \begin{itemize}
         \item How to identify interacting particles?
         \item Short-range forces allow for cutoff radius $\rightarrow$ $\mathcal{O}(N)$ interactions
         \item Different implementations possible
-              \begin{itemize}
-                  \item Unfortunately: No silver bullet
-              \end{itemize}
     \end{itemize}
 
     \vspace{0.2cm}
@@ -142,59 +134,32 @@
                 \cite{SIAM_PP24}}}
     \end{figure}
 
-
-\end{frame}
-
-\begin{frame}{Background: Traversal Patterns}
-    \begin{itemize}
-        \item How to calculate forces in parallel?
-        \item Different traversal patterns possible
-        \item Each pattern has different performance characteristics
-    \end{itemize}
-
-    \vspace{0.2cm}
-    \begin{figure}
-        \centering
-        \includegraphics[width=0.75\textwidth]{figures/traversals.jpg}
-        \caption{\small{\cite{NEWCOME2023115278}}}
-    \end{figure}
-
-
-
 \end{frame}
 
 
-\begin{frame}{Background: Data Layouts}
+\begin{frame}
+    \frametitle{Many difficult choices}
     \begin{itemize}
-        \item How to store particle data in memory?
-        \item SoA
+        \item Shared memory traversals
               \begin{itemize}
-                  \item Easy SIMD manipulation
+                  \item Idle Time vs. Thread Overhead vs. Synchronization
               \end{itemize}
-        \item AoS
+        \item Data layouts
               \begin{itemize}
-                  \item Efficient full particle access
+                  \item Good Vectorization (SoA) vs. Random Access (AoS)
+              \end{itemize}
+        \item Newton 3 optimization
+              \begin{itemize}
+                  \item Reduce work vs. Bookkeeping overhead
               \end{itemize}
 
+        \item Depends on
+              \begin{itemize}
+                  \item Hardware
+                  \item Scenario
+              \end{itemize}
     \end{itemize}
 
-    \vspace{0.2cm}
-    \begin{figure}
-        \centering
-        \includegraphics[width=1\textwidth]{figures/data_layout.png}
-        \caption{\small{\cite{ModernArchitecture}}}
-    \end{figure}
-
-
-\end{frame}
-
-\begin{frame}{Background: Newton 3 Optimization}
-    \begin{itemize}
-        \item How to optimize force calculations?
-        \item Newton 3: Forces are equal and opposite
-        \item Reuse calculated forces also in other directions
-        \item But: Can lead to race conditions
-    \end{itemize}
 \end{frame}
 
 
@@ -223,16 +188,16 @@
             ]
 
             % Nodes with colors
-            \node[fill=blue!30] (A) {LC\\VL\\VCL\\ \vdots};
-            \node[fill=red!30, right=of A] (B) {C01\\C18\\C08\\ \vdots};
-            \node[fill=green!30, right=of B] (C) {SoA\\AoS};
-            \node[fill=yellow!30, right=of C] (D) {On\\Off};
+            \node[fill=blue!30,font=\bfseries] (A) {LC\\VCL\\VL\\ \vdots};
+            \node[fill=red!30, right=of A,font=\bfseries] (B) {C01\\C18\\C08\\ \vdots};
+            \node[fill=green!30, right=of B,font=\bfseries] (C) {SoA\\AoS};
+            \node[fill=yellow!30, right=of C,font=\bfseries] (D) {On\\Off};
 
             % Text underneath ellipses with matching colors
-            \node[textnode, below=-1cm of A, ] (Atext) {Container};
-            \node[textnode, below=-1cm of B, ] (Btext) {Traversal};
-            \node[textnode, below=-1cm of C, ] (Ctext) {Data Layout};
-            \node[textnode, below=-1cm of D, ] (Dtext) {Newton 3};
+            \node[textnode, below=-1.4cm of A, ] (Atext) {Container};
+            \node[textnode, below=-1.4cm of B, ] (Btext) {Traversal};
+            \node[textnode, below=-1.4cm of C, ] (Ctext) {Data Layout};
+            \node[textnode, below=-1.4cm of D, ] (Dtext) {Newton 3};
 
             % Crosses between the nodes
             \draw[->, draw=none] (A) -- (B) node[midway, draw=none] {$\times$};
@@ -265,12 +230,7 @@
 
 
     \begin{itemize}
-        \item Based on a single container type
-              \begin{itemize}
-                  \item GROMACS: Verlet Cluster List
-                  \item LAMMPS: Verlet List
-                  \item ls1 mardyn: Linked Cells
-              \end{itemize}
+        \item Based on a single combination
         \item Performance through:
               \begin{itemize}
                   \item Hardware aware SIMD vectorization
@@ -279,7 +239,7 @@
               \end{itemize}
         \item Drawbacks:
               \begin{itemize}
-                  \item Suboptimal for some scenarios / states
+                  \item Suboptimal for some scenarios
                   \item Manual tuning effort
               \end{itemize}
     \end{itemize}
@@ -298,15 +258,15 @@
     \begin{itemize}
         \item Library for arbitrary N-body simulations
         \item Implements all algorithms
-        \item Idea: Switch between algorithms
               \begin{itemize}
-                  \item[$\rightarrow$] Guarantee optimal performance
+                  \item Modular
+                  \item All\textup{*} configurations possible
               \end{itemize}
-
-        \item Tuning Strategies:
+        \item Idea: AutoTuning
               \begin{itemize}
-                  \item Find optimal configuration
+                  \item Switch algorithms at runtime
                   \item Different strategies available
+                  \item[$\rightarrow$] Thus optimal performance
               \end{itemize}
     \end{itemize}
 
@@ -350,28 +310,27 @@
         {\footnotesize
 
             \begin{tikzpicture}[
-                    level distance=1.5cm,
-                    level 1/.style={sibling distance=3.6cm},
-                    level 2/.style={sibling distance=2.1cm},
+                    level distance=1.7cm,
+                    level 1/.style={sibling distance=3.8cm},
+                    level 2/.style={sibling distance=1.8cm},
                     every node/.style={align=center, rounded corners, draw, fill=white, minimum height=0.6cm},
                     edge from parent/.style={thick, draw=gray}
                 ]
                 \node[fill=gray!20]{Tuning Strategies}
                 child{
                         node[]{Exploration-based}
-                        child{node[fill=blue!10]{FullSearch}}
-                        child{node[fill=blue!10]{RandomSearch}
-                                child{node[fill=blue!10]{BayesianSearch}}
-                            }
+                        child{node[fill=blue!10,minimum height=0.8cm]{Full-\\Search}}
+                        child{node[fill=blue!10,minimum height=0.8cm]{Random-\\Search}}
                     }
                 child{
                         node[]{Performance-based}
-                        child{node[fill=green!10]{PredictiveTuning}}
+                        child{node[fill=green!10,minimum height=0.8cm]{Bayesian-\\Search}}
+                        child{node[fill=green!10,minimum height=0.8cm]{Predictive-\\Tuning}}
                     }
                 child{
                         node[]{Knowledge-based}
-                        child{node[fill=red!10]{RuleBased}}
-                        child{node[fill=red!10]{FuzzyTuning}}
+                        child{node[fill=red!10,minimum height=0.8cm]{RuleBased-\\Tuning}}
+                        child{node[fill=red!10,minimum height=0.8cm]{Fuzzy-\\Tuning}}
                     };
             \end{tikzpicture}
 
@@ -389,8 +348,7 @@
                   \item throughout the simulation
               \end{itemize}
         \item Shown to improve performance in various scenarios
-        \item No manual tuning effort
-        \item AutoPas: Optimal Black-Box for N-body simulations
+        \item User friendly: No manual tuning effort
     \end{itemize}
 \end{frame}
 
@@ -415,8 +373,8 @@
 \begin{frame}{Early Stopping Idea}
 
     \begin{itemize}
-        \item Each configuration gets evaluated multiple times
-        \item Optimization: Abort resampling early if performance is poor
+        \item Optimization: Stop long-running evaluations early
+        \item Configurations get sampled multiple times
         \item Two possible strategies:
               \begin{itemize}
                   \item Stop after first poor sample
@@ -504,37 +462,16 @@
 \end{frame}
 
 
-\begin{frame}{Early Stopping Insights}
+\begin{frame}{Early Stopping Discussion}
 
     \begin{itemize}
-        \item Should be combined with good tuning strategy
+        \item Should be combined with good tuning strategies
         \item Never increased simulation time
         \item $allowedSlowdownFactor$ probably not universal
         \item Future work needed
               \begin{itemize}
                   \item More benchmarks
-                  \item Improved early stopping mechanism
                   \item Investigate other stopping criteria
-              \end{itemize}
-    \end{itemize}
-\end{frame}
-
-
-\begin{frame}{Summary}
-    \begin{itemize}
-        \item Many algorithmic choices in MD simulations
-              \begin{itemize}
-                  \item No silver bullet!
-              \end{itemize}
-        \item AutoPas: Optimal Black-Box for N-body simulations
-              \begin{itemize}
-                  \item Auto-Tuning very beneficial
-                  \item But: Overhead from tuning
-              \end{itemize}
-        \item Early Stopping Optimization
-              \begin{itemize}
-                  \item Minimal changes to AutoPas
-                  \item Promising improvements
               \end{itemize}
     \end{itemize}
 \end{frame}
@@ -562,7 +499,6 @@
     \bibliography{literature}
 \end{frame}
 
-\appendix
 
 
 
