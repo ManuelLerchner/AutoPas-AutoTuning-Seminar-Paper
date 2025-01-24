@@ -302,42 +302,42 @@
     \end{center}
 \end{frame}
 
-\begin{frame}
-    \frametitle{Tuning Strategies}
+% \begin{frame}
+%     \frametitle{Tuning Strategies}
 
-    \begin{center}
+%     \begin{center}
 
-        {\footnotesize
+%         {\footnotesize
 
-            \begin{tikzpicture}[
-                    level distance=1.7cm,
-                    level 1/.style={sibling distance=3.8cm},
-                    level 2/.style={sibling distance=1.8cm},
-                    every node/.style={align=center, rounded corners, draw, fill=white, minimum height=0.6cm},
-                    edge from parent/.style={thick, draw=gray}
-                ]
-                \node[fill=gray!20]{Tuning Strategies}
-                child{
-                        node[]{Exploration-based}
-                        child{node[fill=blue!10,minimum height=0.8cm]{Full-\\Search}}
-                        child{node[fill=blue!10,minimum height=0.8cm]{Random-\\Search}}
-                    }
-                child{
-                        node[]{Performance-based}
-                        child{node[fill=green!10,minimum height=0.8cm]{Bayesian-\\Search}}
-                        child{node[fill=green!10,minimum height=0.8cm]{Predictive-\\Tuning}}
-                    }
-                child{
-                        node[]{Knowledge-based}
-                        child{node[fill=red!10,minimum height=0.8cm]{RuleBased-\\Tuning}}
-                        child{node[fill=red!10,minimum height=0.8cm]{Fuzzy-\\Tuning}}
-                    };
-            \end{tikzpicture}
+%             \begin{tikzpicture}[
+%                     level distance=1.7cm,
+%                     level 1/.style={sibling distance=3.8cm},
+%                     level 2/.style={sibling distance=1.8cm},
+%                     every node/.style={align=center, rounded corners, draw, fill=white, minimum height=0.6cm},
+%                     edge from parent/.style={thick, draw=gray}
+%                 ]
+%                 \node[fill=gray!20]{Tuning Strategies}
+%                 child{
+%                         node[]{Exploration-based}
+%                         child{node[fill=blue!10,minimum height=0.8cm]{Full-\\Search}}
+%                         child{node[fill=blue!10,minimum height=0.8cm]{Random-\\Search}}
+%                     }
+%                 child{
+%                         node[]{Performance-based}
+%                         child{node[fill=green!10,minimum height=0.8cm]{Bayesian-\\Search}}
+%                         child{node[fill=green!10,minimum height=0.8cm]{Predictive-\\Tuning}}
+%                     }
+%                 child{
+%                         node[]{Knowledge-based}
+%                         child{node[fill=red!10,minimum height=0.8cm]{RuleBased-\\Tuning}}
+%                         child{node[fill=red!10,minimum height=0.8cm]{Fuzzy-\\Tuning}}
+%                     };
+%             \end{tikzpicture}
 
-        }
-    \end{center}
+%         }
+%     \end{center}
 
-\end{frame}
+% \end{frame}
 
 \begin{frame}{Benefits of Auto-Tuning}
     \begin{itemize}
@@ -370,15 +370,13 @@
 \section{Early Stopping Optimization}
 
 
-\begin{frame}{Early Stopping Idea}
+\begin{frame}{Early Stopping Optimization}
 
     \begin{itemize}
-        \item Optimization: Stop long-running evaluations early
+        \item Idea: Stop long-running evaluations early
         \item Configurations get sampled multiple times
-        \item Two possible strategies:
               \begin{itemize}
-                  \item Stop after first poor sample
-                  \item Stop during evaluation
+                  \item Naive approach: Stop after first poor sample
               \end{itemize}
     \end{itemize}
 
@@ -410,7 +408,6 @@
             \draw[decorate, decoration={brace, amplitude=15pt, mirror}, thick]
             ($(box1.south west) + (0,-0.2)$) -- ($(dots.south east) + (0,-0.2)$)
             node[midway, below=5pt,draw=none] {\textit{\#samples}};
-
 
 
         \end{tikzpicture}
