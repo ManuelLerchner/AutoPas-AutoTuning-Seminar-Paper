@@ -115,10 +115,10 @@
 
 \end{frame}
 
-\section{Background MD Algorithms}
+\section{Algorithmic Trade-offs}
 
 \begin{frame}
-    \frametitle{Example: Particle Container}
+    \frametitle{Trade-off: Particle Containers}
 
     \begin{itemize}
         \item How to identify interacting particles?
@@ -137,29 +137,29 @@
 \end{frame}
 
 
+% \begin{frame}
+%     \frametitle{}
+%     \begin{itemize}
+%         \item Shared memory traversals
+%         \item Data layouts
+%         \item Newton 3 optimization
+%         \item $\dots$
+
+
+%         \item Best choice depends on:
+%               \begin{itemize}
+%                   \item Hardware
+%                   \item Scenario
+%               \end{itemize}
+%     \end{itemize}
+% \end{frame}
+
+
 \begin{frame}
     \frametitle{Many more difficult choices}
     \begin{itemize}
-        \item Shared memory traversals
-        \item Data layouts
-        \item Newton 3 optimization
-        \item $\dots$
-
-
-        \item Best choice depends on:
-              \begin{itemize}
-                  \item Hardware
-                  \item Scenario
-              \end{itemize}
-    \end{itemize}
-
-\end{frame}
-
-
-\begin{frame}
-    \frametitle{Which Combination to Choose?}
-    \begin{itemize}
-        \item Remember: No silver bullet!
+        \item No silver bullet!
+        \item Hardware- and Scenario-dependent
     \end{itemize}
     \begin{center}
 
@@ -171,7 +171,7 @@
                         draw,
                         ellipse,
                         minimum width=1.8cm,
-                        minimum height=4cm,
+                        minimum height=3.8cm,
                         align=center
                     },
                 textnode/.style={
@@ -223,17 +223,16 @@
 
 
     \begin{itemize}
-        \item Based on a single combination
+        \item Based on a single container
         \item Performance through:
               \begin{itemize}
                   \item Very optimized code
                   \item Vectorization
-                  \item Manual tuning to target hardware
               \end{itemize}
         \item Drawbacks:
               \begin{itemize}
                   \item Suboptimal for some scenarios
-                  \item Manual tuning effort
+                  \item Require manual tuning
               \end{itemize}
     \end{itemize}
 
@@ -258,7 +257,6 @@
         \item Idea: AutoTuning
               \begin{itemize}
                   \item Finds optimal configuration
-                  \item Runtime switching
                   \item[$\rightarrow$] Thus optimal performance
               \end{itemize}
         \item Arbitrary user code
@@ -457,22 +455,19 @@
 \end{frame}
 
 
-\begin{frame}{Discussion of Naive Early Stopping}
+\begin{frame}{Insights from Benchmarking}
 
     \begin{itemize}
-        \item Works well with good tuning strategies
+        \item Early stopping is beneficial
               \begin{itemize}
-                  \item $t_{\text{best}}$ converges faster
+                  \item Never increased runtime!
               \end{itemize}
         \item $allowedSlowdownFactor$ probably not universal
               \begin{itemize}
                   \item More benchmarks needed!
+                  \item Investigate other stopping criteria
               \end{itemize}
-        \item Investigate less naive approaches
-              \begin{itemize}
-                  \item Improve stopping criterion
-                  \item Abort during evaluation
-              \end{itemize}
+        \item Potential for further improvements
     \end{itemize}
 \end{frame}
 
