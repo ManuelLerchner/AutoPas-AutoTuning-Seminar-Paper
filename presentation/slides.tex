@@ -138,22 +138,15 @@
 
 
 \begin{frame}
-    \frametitle{Many difficult choices}
+    \frametitle{Many more difficult choices}
     \begin{itemize}
         \item Shared memory traversals
-              \begin{itemize}
-                  \item Idle Time vs. Thread Overhead vs. Synchronization
-              \end{itemize}
         \item Data layouts
-              \begin{itemize}
-                  \item Good Vectorization (SoA) vs. Random Access (AoS)
-              \end{itemize}
         \item Newton 3 optimization
-              \begin{itemize}
-                  \item Reduce work vs. Bookkeeping overhead
-              \end{itemize}
+        \item $\dots$
 
-        \item Depends on
+
+        \item Best choice depends on:
               \begin{itemize}
                   \item Hardware
                   \item Scenario
@@ -233,8 +226,8 @@
         \item Based on a single combination
         \item Performance through:
               \begin{itemize}
-                  \item Hardware aware SIMD vectorization
-                  \item Memory layout optimization
+                  \item Very optimized code
+                  \item Vectorization
                   \item Manual tuning to target hardware
               \end{itemize}
         \item Drawbacks:
@@ -260,14 +253,15 @@
         \item Implements all algorithms
               \begin{itemize}
                   \item Modular
-                  \item All\textup{*} configurations possible
+                  \item All\textup{\small*} configurations possible
               \end{itemize}
         \item Idea: AutoTuning
               \begin{itemize}
-                  \item Switch algorithms at runtime
-                  \item Different strategies available
+                  \item Finds optimal configuration
+                  \item Runtime switching
                   \item[$\rightarrow$] Thus optimal performance
               \end{itemize}
+        \item Arbitrary user code
     \end{itemize}
 
     \begin{textblock*}{4cm}(8.2cm,3cm)
@@ -288,14 +282,12 @@
     \frametitle{Auto-Tuning in AutoPas}
 
     \begin{itemize}
-        \item Divide simulation into Tuning- and Simulation-Phase
-        \item Tuning-Phase:
-              \begin{itemize}
-                  \item Tuning Strategies suggest configurations
-                  \item Measure promising configurations
-                  \item Choose best configuration
-              \end{itemize}
+        \item Tuning-Phase: Evaluate promising configurations
+        \item Simulation-Phase: Use best configuration
+        \item Capable of reducing simulation time!
     \end{itemize}
+
+    \vspace{0.2cm}
 
     \begin{center}
         \includegraphics[width=1\textwidth]{figures/timing.png}
@@ -339,18 +331,18 @@
 
 % \end{frame}
 
-\begin{frame}{Benefits of Auto-Tuning}
-    \begin{itemize}
-        \item Optimal configuration
-              \begin{itemize}
-                  \item for every scenario
-                  \item for every hardware
-                  \item throughout the simulation
-              \end{itemize}
-        \item Shown to improve performance in various scenarios
-        \item User friendly: No manual tuning effort
-    \end{itemize}
-\end{frame}
+% \begin{frame}{Benefits of Auto-Tuning}
+%     \begin{itemize}
+%         \item Optimal configuration
+%               \begin{itemize}
+%                   \item for every scenario
+%                   \item for every hardware
+%                   \item throughout the simulation
+%               \end{itemize}
+%         \item Shown to improve performance in various scenarios
+%         \item User friendly: No manual tuning effort
+%     \end{itemize}
+% \end{frame}
 
 \begin{frame}{Problems of Auto-Tuning}
     \begin{itemize}
@@ -375,13 +367,16 @@
     \begin{itemize}
         \item Idea: Stop long-running evaluations early
         \item Configurations get sampled multiple times
+        \item Naive approach:
               \begin{itemize}
-                  \item Naive approach: Stop after first poor sample
+                  \item Last sample performed poorly?
+                  \item Stop further evaluations
               \end{itemize}
     \end{itemize}
 
-    \vspace{0.8cm}
+    \vspace{1cm}
 
+    {\small
     \begin{center}
         \begin{tikzpicture}[
                 node distance=1.2cm and 0.6cm,
@@ -407,10 +402,11 @@
             % Curly brace underneath the boxes
             \draw[decorate, decoration={brace, amplitude=15pt, mirror}, thick]
             ($(box1.south west) + (0,-0.2)$) -- ($(dots.south east) + (0,-0.2)$)
-            node[midway, below=5pt,draw=none] {\textit{\#samples}};
+            node[midway, below=2pt,draw=none] {$n$};
 
 
         \end{tikzpicture}
+        }
     \end{center}
 \end{frame}
 
@@ -422,8 +418,8 @@
         \item Changes to AutoPas are minimal
               \begin{itemize}
                   \item Keep track of best performance seen so far
-                  \item $slowdownFactor = \frac{t_{\text{sample}}}{t_{\text{best}}}$
-                  \item Call \texttt{retune()} if $slowdownFactor$ exceeds threshold
+                  \item \texttt{slowdownFactor} $= \frac{t_{\text{sample}}}{t_{\text{best}}}$
+                  \item Call \texttt{retune()} if slowdownFactor exceeds threshold
               \end{itemize}
 
 
@@ -431,9 +427,11 @@
 
         \item Which $allowedSlowdownFactor$ should be used?
               \begin{itemize}
-                  \item $allowedSlowdownFactor \rightarrow 1$: Many spurious aborts
+                  \item $allowedSlowdownFactor \rightarrow 1$: Many aborts
                   \item $allowedSlowdownFactor \rightarrow \infty$: No early stopping
               \end{itemize}
+
+        \item Empirical evaluation needed
     \end{itemize}
 \end{frame}
 
@@ -459,16 +457,21 @@
 \end{frame}
 
 
-\begin{frame}{Early Stopping Discussion}
+\begin{frame}{Discussion of Naive Early Stopping}
 
     \begin{itemize}
-        \item Should be combined with good tuning strategies
-        \item Never increased simulation time
-        \item $allowedSlowdownFactor$ probably not universal
-        \item Future work needed
+        \item Works well with good tuning strategies
               \begin{itemize}
-                  \item More benchmarks
-                  \item Investigate other stopping criteria
+                  \item $t_{\text{best}}$ converges faster
+              \end{itemize}
+        \item $allowedSlowdownFactor$ probably not universal
+              \begin{itemize}
+                  \item More benchmarks needed!
+              \end{itemize}
+        \item Investigate less naive approaches
+              \begin{itemize}
+                  \item Improve stopping criterion
+                  \item Abort during evaluation
               \end{itemize}
     \end{itemize}
 \end{frame}
