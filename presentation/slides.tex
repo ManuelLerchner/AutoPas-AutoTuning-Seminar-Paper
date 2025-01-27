@@ -455,22 +455,27 @@
 \end{frame}
 
 
-\begin{frame}{Insights from Benchmarking}
+\begin{frame}
+    \frametitle{Summary and Future Work}
 
     \begin{itemize}
-        \item Early stopping is beneficial
+        \item AutoPas Library
+              \begin{itemize}
+                  \item Flexible and optimal N-body simulations
+                  \item AutoTuning can cause overhead
+              \end{itemize}
+        \item (Naive) Early stopping is beneficial
               \begin{itemize}
                   \item Never increased runtime!
+                  \item Potential for further improvements
               \end{itemize}
         \item $allowedSlowdownFactor$ probably not universal
               \begin{itemize}
                   \item More benchmarks needed!
                   \item Investigate other stopping criteria
               \end{itemize}
-        \item Potential for further improvements
     \end{itemize}
 \end{frame}
-
 
 
 \begin{frame}
