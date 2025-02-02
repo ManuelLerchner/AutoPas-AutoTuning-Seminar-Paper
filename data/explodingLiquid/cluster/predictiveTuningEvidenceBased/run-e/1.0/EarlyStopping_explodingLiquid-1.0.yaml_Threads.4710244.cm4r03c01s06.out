@@ -1,5 +1,0 @@
-YamlParser: Parsing error in line 22 at column 36, key: max-allowed-slowdown-factor
-Message: Max allowed slowdown factor has to be greater than 1!
-Expected: Floating point value > 1
-Parameter description: Maximum allowed slowdown factor for the auto-tuner. A configuration performing worse than the current optimum by this factor will be blacklisted from the current tuning phase
-Error when parsing configuration file.

@@ -1,0 +1,7 @@
+YamlParser: Parsing error in line 21 at column 36, key: early-stopping-factor
+Message: EarlyStoppingFactor has to be greater than 1!
+Expected: Floating point value > 1
+Parameter description: EarlyStoppingFactor for the auto-tuner. A configuration seeming to perform worse than the previously best configuration by this factor will not be sampled again during that tuning phase.
+
+
+Error when parsing configuration file.

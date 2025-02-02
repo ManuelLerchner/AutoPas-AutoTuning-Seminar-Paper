@@ -421,12 +421,12 @@
               \end{itemize}
 
 
-        \item Hyperparameter: $allowedSlowdownFactor$
+        \item Hyperparameter: $earlyStoppingFactor$
 
-        \item Which $allowedSlowdownFactor$ should be used?
+        \item Which $earlyStoppingFactor$ should be used?
               \begin{itemize}
-                  \item $allowedSlowdownFactor \rightarrow 1$: Many aborts
-                  \item $allowedSlowdownFactor \rightarrow \infty$: No early stopping
+                  \item $earlyStoppingFactor \rightarrow 1$: Many aborts
+                  \item $earlyStoppingFactor \rightarrow \infty$: No early stopping
               \end{itemize}
 
         \item Empirical evaluation needed
@@ -436,7 +436,7 @@
 \begin{frame}{Benchmark: Exploding Liquid + PredictiveTuning}
 
     \begin{itemize}
-        \item Optimal at $allowedSlowdownFactor = 5$
+        \item Optimal at $earlyStoppingFactor = 5$
         \item From 28.6s to 23.2s
               \begin{itemize}
                   \item[$\rightarrow$] 18.9\% reduction
@@ -469,7 +469,7 @@
                   \item Never increased runtime!
                   \item Potential for further improvements
               \end{itemize}
-        \item $allowedSlowdownFactor$ probably not universal
+        \item $earlyStoppingFactor$ probably not universal
               \begin{itemize}
                   \item More benchmarks needed!
                   \item Investigate other stopping criteria

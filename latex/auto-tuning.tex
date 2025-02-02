@@ -68,7 +68,7 @@
 \begin{abstract}
     Simulating molecular dynamics (MD) presents a significant computational challenge due to the vast number of particles involved in modern experiments. Naturally, researchers have put much effort into developing algorithms and frameworks that can efficiently simulate these systems. This paper focuses on the AutoPas framework, a modern particle simulation library that uses dynamic optimization techniques to achieve high performance in complex simulation scenarios. We introduce the AutoPas framework as a natural progression from existing MD engines, such as GROMACS, LAMMPS, and ls1 mardyn\footnote{
         While it is possible to include AutoPas into ls1 mardyn and LAMMPS, we solely consider both standalone applications in this paper.
-    }, and investigate a possible improvement to AutoPas' auto-tuning capabilities by introducing an early stopping mechanism aiming to reduce the overhead of parameter space exploration. Our evaluation shows that such a mechanism can reduce the total simulation time by up to 18.9\% in specific scenarios, demonstrating the potential of this improvement.
+    }, and investigate a possible improvement to AutoPas' auto-tuning capabilities by introducing an early stopping mechanism aiming to reduce the overhead of parameter space exploration. Our evaluation shows that such a mechanism can reduce the total simulation time by up to 21.1\% in specific scenarios, demonstrating the potential of this improvement.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -282,36 +282,35 @@ To minimize some of the introduced drawbacks of the auto-tuning process, \cite{e
 
 \begin{itemize}
     \item \textbf{Stopping Further Samples}\\
-          As AutoPas evaluates a configuration multiple times to reduce measurement noise, a simple way to implement early stopping would be to stop the evaluation of further samples as soon as it is clear that the performance is significantly worse than the best-known configuration.
-
-          This approach may not be as effective as it still requires fully evaluating the first sample of a bad configuration.
+          As AutoPas evaluates a configuration multiple times to reduce measurement noise, a simple way to implement early stopping would be to stop the evaluation of further samples as soon as it is clear that the performance is significantly worse than the best-known configuration. This approach however requires fully evaluating some samples of a bad configuration.
     \item \textbf{Interrupting the Evaluation}\\
-          A more fine-grained approach, proposed in~\cite{endreport.pdf}, could interrupt the evaluation of a long-running configuration while it is still being evaluated.
-
-          Implementing this approach would require a big rewrite of AutoPas' internal structure and is therefore not feasible in the short term.
+          A more fine-grained approach, proposed in~\cite{endreport.pdf}, could interrupt the evaluation of a long-running configuration while it is still being evaluated. Such a change would require a big rewrite of AutoPas' internal structure and is not feasible in the short term.
 \end{itemize}
 
 To get a first impression of the potential benefits of an early stopping mechanism, we implemented the first approach into the AutoPas framework\footnote{
-    See \href{https://github.com/AutoPas/AutoPas/tree/early-stopping}{
-        https://github.com/AutoPas/AutoPas/tree/early-stopping} for the initial implementation.
+    See \href{https://github.com/AutoPas/AutoPas/pull/995}{
+        https://github.com/AutoPas/AutoPas/pull/995} for the changes.
 }. The changes to the existing codebase are minimal, as the early-stopping mechanism can be implemented using existing functionality. \autoref{alg_early_stopping} shows the main changes to the \texttt{AutoTuner.cpp} file.
 
-Both described approaches require a user-defined threshold for the $allowedSlowdownFactor$ that determines when the evaluation of a configuration should be stopped. As finding optimal thresholds is non-trivial and may depend on the simulation scenario and the tuning strategy, suitable thresholds will be determined empirically in the next section.
-
+Both described approaches require a user-defined threshold, called $earlyStoppingFactor$, to determine how much slower a configuration can be compared to the best-known configuration before it is considered inefficient. The effect of this threshold will be evaluated in the following section.
 \begin{algorithm}[h]
     \small
     \caption{Early Stopping Algorithm in AutoPas}
     \label{alg_early_stopping}
     \begin{algorithmic}[1]
-        \Procedure{evaluateConfiguration}{performance}
-        \State $fastestTime \gets \min(fastestTime, performance)$
-        \State $slowdownFactor \gets \frac{performance}{fastestTime}$
-        \If{$slowdownFactor > allowedSlowdownFactor$}
+        \Procedure{checkEarlyStoppingCondition}{~}
+        \If{not $\Call{enoughConfidence}{~}$}
+        \State \Return
+        \EndIf
+        \State $evidencePred \gets \Call{estimateRuntimeFromSamples}{~}$
+        \State $bestEvidence \gets \Call{getLatestOptimalConfiguration}{~}$
+        \State $slowdownFactor \gets \frac{evidencePred}{bestEvidence}$
+        \If{$slowdownFactor > earlyStoppingFactor$}
         \State $abort \gets true$
         \EndIf
         \EndProcedure
 
-        \vspace{0.5em}
+        \vspace{0.2em}
 
         \Procedure{GetNextConfiguration}{}
         \If{not $inTuningPhase$}
@@ -329,62 +328,82 @@ Both described approaches require a user-defined threshold for the $allowedSlowd
 \subsection{Evaluation: Exploding Liquid Simulation}
 \label{sec:evaluation}
 
-To evaluate the performance of the early stopping mechanism, we perform a benchmark using the Exploding Liquid scenario\footnote{
+To evaluate the performance of the early stopping mechanism, we perform benchmarks using the Exploding Liquid scenario\footnote{
     The input file can be found at \href{
         https://github.com/AutoPas/AutoPas/blob/master/examples/md-flexible/input/explodingLiquid.yaml}{explodingLiquid.yaml}.
     A video of the simulation is available at \url{https://youtu.be/u7TE5KiSQ08}.
-} provided by \texttt{md-flexible}. The simulation consists of 1764 initially close-packed particles, rapidly expanding outwards and eventually hitting the simulation boundaries. All benchmarks are performed on a single node of the \href{https://doku.lrz.de/coolmuc-2-11484376.html}{CoolMUC2} supercomputer using 14 threads, and are repeated three times.
+} provided by \texttt{md-flexible}. The simulation consists of 1764 initially close-packed particles, rapidly expanding outwards and eventually hitting the simulation boundaries. All runs are performed using a single node of the \href{https://doku.lrz.de/coolmuc-4-1082337877.html}{CoolMUC4} supercomputer with 2 threads and are repeated five times.
 
 \begin{description}[style=nextline]
     \item[FullSearch (\autoref{fig:full_search})]
         When using the early stopping optimization together with the FullSearch strategy, the total simulation time
-        can be reduced from 36.22 seconds to 30.84 seconds at $allowedSlowdownFactor \approx4$. This results in a reduction of the total simulation time by 14.8\%.
+        can be reduced from 15.86 seconds to 12.58 seconds at $earlyStoppingFactor \approx4$. This results in a reduction of the total simulation time by 20.7\%.
     \item[PredictiveTuning (\autoref{fig:predictive_tuning})]
-        When using the early stopping optimization together with the PredictiveTuning strategy, the total simulation time can be reduced from 28.62 seconds to 23.23 seconds at a $allowedSlowdownFactor \approx5$. This results in a reduction of the total simulation time by 18.9\%.
+        When using the early stopping optimization together with the PredictiveTuning strategy, the total simulation time
+        can be reduced from 13.93 seconds to 10.99 seconds at $earlyStoppingFactor \approx4$. This results in a reduction of the total simulation time by 21.1\%.
+    \item[FuzzyTuning (\autoref{fig:fuzzy_tuning})]
+        When using the early stopping optimization together with the FuzzyTuning strategy, no significant reduction in the total simulation time is observed.
 \end{description}
 
-\begin{figure}[H]
+\begin{figure}[h]
     \centering
+    \begin{subfigure}[b]{\columnwidth}
+        \includegraphics[width=\columnwidth]{../data/explodingLiquid/cluster/fullSearchEvidenceBased_2threads/analytics/total_time_average.png}
 
-    \includegraphics[width=\columnwidth]{../data/explodingLiquid/cluster/fullSearch/analytics/total_time_average.png}
+        \caption{Total Simulation Time for Exploding Liquid Simulation using the FullSearch strategy with early stopping.}
+        \label{fig:full_search}
+    \end{subfigure}
 
-    \caption{Total Simulation Time for Exploding Liquid Simulation for different values of $allowedSlowdownFactor$ using the FullSearch strategy with early stopping.}
-    \label{fig:full_search}
-\end{figure}
+    \begin{subfigure}[b]{\columnwidth}
+        \centering
 
-\begin{figure}[H]
-    \centering
+        \includegraphics[width=\columnwidth]{../data/explodingLiquid/cluster/predictiveTuningEvidenceBased_2threads/analytics/total_time_average.png}
 
-    \includegraphics[width=\columnwidth]{../data/explodingLiquid/cluster/predictiveTuning/analytics/total_time_average.png}
+        \caption{Total Simulation Time for Exploding Liquid Simulation using the PredictiveTuning strategy with early stopping.}
+        \label{fig:predictive_tuning}
+    \end{subfigure}
 
-    \caption{Total Simulation Time for Exploding Liquid Simulation for different values of $allowedSlowdownFactor$ using the PredictiveTuning strategy with early stopping.}
-    \label{fig:predictive_tuning}
+    \begin{subfigure}[b]{\columnwidth}
+        \centering
+
+        \includegraphics[width=\columnwidth]{../data/explodingLiquid/cluster/fuzzyTuningEvidenceBased_2threads/analytics/total_time_average.png}
+
+        \caption{Total Simulation Time for Exploding Liquid Simulation using the FuzzyTuning[Suitability] strategy with early stopping.}
+        \label{fig:fuzzy_tuning}
+    \end{subfigure}
 \end{figure}
 
 \subsection{Analysis and Discussion}
 \begin{description}[leftmargin=1.2em, font=\itshape, style=nextline]
-    \item[Optimal Thresholds:]
-        The evaluated benchmarks show that there only exists a narrow range of $allowedSlowdownFactor$ values where the early stopping mechanism is beneficial. Outside of this range, the total simulation time is comparable to the performance of the simulation without the early stopping mechanism.
+    \item[Early Stopping Factor:]
+        As expected, the benchmark results suggest that choosing a lower $earlyStoppingFactor$ generally results in shorter total simulation times, while higher thresholds lead to longer total simulation times, whenever \textit{bad} configurations are evaluated. Thus the time savings correlate with the number of configurations that are stopped early.
 
-        This is expected, as both limiting cases result in undesirable behavior: $allowedSlowdownFactor \to 1$ results in tuning phases with very few samples per configuration, as even slight noise in the performance measurements causes the early stopping mechanism to abort a configuration. This results in very quick tuning phases but prohibits a reasonable estimation of the performance of a configuration and could result in a suboptimal configuration winning the tuning phase. On the other hand, $allowedSlowdownFactor \to \infty$ results in the early stopping mechanism never aborting a configuration, which is equivalent to not using the early stopping mechanism at all. As stated previously, this results in very long tuning phases. Picking a suitable threshold corresponds to finding a balance between the two extremes.
+        The limiting case of $earlyStoppingFactor \rightarrow \infty$ results in the same total simulation time as without the early stopping mechanism, as the early stopping mechanism is effectively disabled.
 
-        The optimal threshold of around 4.5 for the \textit{ExplodingLiquid} scenario probably varies between different scenarios and tuning strategies. Further benchmarks are required to determine the optimal threshold for other scenarios. It is, however, noteworthy that the early stopping mechanism never caused a significant increase in the total simulation time, even when using suboptimal thresholds.
+        Interestingly, the limit $earlyStoppingFactor \rightarrow 1$ does not impact the total simulation time negatively. This suggests that the performance prediction is very accurate, even when very few samples are available, and allows for very aggressive early stopping.
 
-    \item[Combination with Tuning Strategies:]
-        The evaluated benchmarks show that a combination of the early stopping mechanism with good tuning strategies is beneficial and additionally reduces the total simulation time. Good tuning strategies are expected to benefit more from the early stopping mechanism, as evaluating good configurations early results in faster convergence of the $fastestTime$ variable. This allows for the early stopping mechanism to abort more configurations, further reducing the total tuning time.
+        However, in general, an ideal $earlyStoppingFactor$ should be chosen high enough to provide a sufficient margin to account for measurement noise, while being low enough to stop the evaluation of slow configurations effectively. Based on the benchmark results, $earlyStoppingFactor \approx 1.5$ seems to be a good compromise, as lower thresholds would only reduce the total simulation time marginally.
+
+        It is however unclear whether such a threshold is universally applicable to all scenarios. Additional benchmarking across a broader range of use cases is needed to validate these preliminary findings.
+
+    \item[Effect on Tuning Strategies:]
+        The evaluated benchmarks show that the FullSearch and PredictiveTuning strategies benefit drastically from early stopping. The FullSearch strategy naturally encounters many bad configurations and performs as expected. The PredictiveTuning strategy however can't show its full potential, since the benchmark is too short for the strategy to leave the initial data collection phase, during which it behaves similarly to the FullSearch strategy.
+
+        As the FuzzyTuning strategy performs nearly optimal even without early stopping, the use of the early stopping mechanism does not provide any further benefits.
 
     \item[Limitations and Future Work:]
-        The current implementation of the early stopping mechanism resets the $fastestTime$ variable prior to each tuning phase, resulting in a complete loss of the information gathered in previous iterations. This ensures that the $fastestTime$ variable is always up-to-date with the current simulation state and prevents the early stopping mechanism from mistakenly aborting configuration based on a timing measurement that can no longer be achieved due to changes in the simulation state.
+        The current implementation of the early stopping mechanism starts with a fresh set of evidence samples in each tuning phase. This results in not using the information gathered in previous tuning phases, which could potentially help to stop evaluating configurations earlier.
 
-        An improved version could only reset the $fastestTime$ variable to a running average of timing measurements collected during the prior simulation phase. This would allow the early stopping mechanism to start with a reasonable estimate of achievable performance, increasing the likelihood of aborting unsuitable configurations early.
+        This ensures that the $bestEvidence$ variable is always up-to-date with the current simulation state and prevents the early stopping mechanism from mistakenly stopping the evaluation of a configuration based on timing measurements that can no longer be achieved due to changes in the simulation state.
 
+        An improved version could keep track of a running average of timing measurements collected during the prior simulation phase, allowing the early stopping mechanism to start with a reasonable estimate of achievable performance, thus increasing the likelihood of stopping unsuitable configurations early.
 \end{description}
 
 \section{Conclusion}
 
 We presented an overview of the AutoPas framework and its auto-tuning capabilities and demonstrated the benefits and challenges of dynamic auto-tuning in molecular dynamics simulations.
 
-Moreover, we investigated the potential of a naive early stopping mechanism to reduce some of the inherent overhead caused by tuning phases and demonstrated that such a mechanism can reduce the total simulation time by up to 18.9\% in specific scenarios.
+Moreover, we investigated the potential of a naive early stopping mechanism to reduce some of the inherent overhead caused by tuning phases and demonstrated that such a mechanism can reduce the total simulation time by up to 21.1\% in specific scenarios.
 
 The comparison with established MD engines such as GROMACS, LAMMPS, and ls1 mardyn reveals a fundamental trade-off in software design. While these engines achieve excellent performance through highly specialized implementations, AutoPas offers greater flexibility and adaptability through its modular architecture and dynamic optimization capabilities by accepting some performance overhead.\\
 However, the successful integration of AutoPas into ls1 mardyn and LAMMPS demonstrates that these approaches can be complementary rather than mutually exclusive.
