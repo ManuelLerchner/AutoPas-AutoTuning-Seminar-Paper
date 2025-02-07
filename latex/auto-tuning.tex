@@ -66,9 +66,7 @@
 \maketitle
 
 \begin{abstract}
-    Simulating molecular dynamics (MD) presents a significant computational challenge due to the vast number of particles involved in modern experiments. Naturally, researchers have put much effort into developing algorithms and frameworks that can efficiently simulate these systems. This paper focuses on the AutoPas framework, a modern particle simulation library that uses dynamic optimization techniques to achieve high performance in complex simulation scenarios. We introduce the AutoPas framework as a natural progression from existing MD engines, such as GROMACS, LAMMPS, and ls1 mardyn\footnote{
-        While it is possible to include AutoPas into ls1 mardyn and LAMMPS, we solely consider both standalone applications in this paper.
-    }, and investigate a possible improvement to AutoPas' auto-tuning capabilities by introducing an early stopping mechanism aiming to reduce the overhead of parameter space exploration. Our evaluation shows that such a mechanism can reduce the total simulation time by up to 21.1\% in specific scenarios, demonstrating the potential of this improvement.
+    Simulating molecular dynamics (MD) presents a significant computational challenge due to the vast number of particles involved in modern experiments. Naturally, researchers have put much effort into developing algorithms and frameworks that can efficiently simulate these systems. This paper focuses on the AutoPas framework, a modern particle simulation library that uses dynamic optimization techniques to achieve high performance in complex simulation scenarios. We introduce the AutoPas framework and investigate a possible improvement to AutoPas' auto-tuning capabilities by introducing an early stopping mechanism aiming to reduce the overhead of parameter space exploration. Our evaluation shows that such a mechanism can reduce the total simulation time by up to 21.1\% in specific scenarios, demonstrating the potential of this improvement.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -87,7 +85,7 @@ This paper provides an overview of the AutoPas framework and the benefits and ch
 
 \section{Related Work}
 
-Established MD engines such as GROMACS, LAMMPS, and ls1 mardyn have been developed over many years and have been optimized to achieve high performance in their respective use cases. This section provides an overview of these engines.
+Established MD engines such as GROMACS, LAMMPS, and ls1 mardyn have been developed over many years and have been optimized to achieve high performance in their respective use cases. This section provides an overview of the default implementations of these engines.
 
 \subsection{GROMACS}
 
@@ -103,11 +101,11 @@ LAMMPS utilizes a performance-optimized version of the Verlet List algorithm. To
 
 \subsection{ls1 mardyn}
 
-ls1 mardyn differs from the previously mentioned MD engines as it uses the Linked Cells algorithm for particle interactions. Using LinkedCells provides a better memory efficiency than GROMACS and LAMMPS, allowing for simulations of massive particle systems~\cite{tchipev2019twe}. Internally, ls1 mardyn uses the default data layout of \textit{AoS} (Array of Structures) for storing particle data and converts it to an \textit{SoA} (Structure of Arrays) layout when required. Particular branches aimed at simulating massive particle systems can use a \texttt{RMM} (Reduced Memory Mode) layout in combination with a \textit{SoA} (Structure of Arrays) data layout, allowing for simulations of up to twenty trillion atoms~\cite{tchipev2019twe}.
+ls1 mardyn differs from the previously mentioned MD engines as it uses the Linked Cells algorithm for particle interactions. Using LinkedCells provides a better memory efficiency than GROMACS and LAMMPS, allowing for simulations of massive particle systems~\cite{tchipev2019twe}. Internally, ls1 mardyn uses the default data layout of \textit{AoS} (Array of Structures) for storing particle data and converts it to an \textit{SoA} (Structure of Arrays) layout when required. Particular branches aimed at simulating massive particle systems can use a \texttt{RMM} (Reduced Memory Mode) layout, allowing for simulations of up to twenty trillion atoms~\cite{tchipev2019twe}.
 
 \vspace{0.2cm}
 
-While GROMACS, LAMMPS, and ls1 mardyn achieve remarkable performance through specialized and statically optimized implementations, their reliance on manual tuning and hardware-specific adjustments presents challenges. These limitations motivates the need for adaptive frameworks like AutoPas, which aim to dynamically optimize configurations during runtime, providing a more flexible and user-friendly approach to high-performance molecular dynamics simulations.
+While GROMACS, LAMMPS, and ls1 mardyn achieve remarkable performance through specialized and statically optimized implementations, their reliance on manual tuning and hardware-specific adjustments presents challenges. These limitations have led to the development of frameworks like AutoPas, which aim to dynamically optimize their performance based on the simulation state and hardware characteristics.
 
 \section{AutoPas}
 
@@ -128,7 +126,7 @@ To eliminate the need for manual configuration selection and enable dynamic opti
         https://github.com/AutoPas/AutoPas}}
 
 
-All different algorithmic implementations for solving N-Body problems are part of the so-called \textit{Algorithm Library} of AutoPas. The Algorithm Library contains different implementations for certain key aspects of the simulation, such as neighbor identification, traversal patterns, memory layouts, and optimization techniques. Currently, AutoPas supports the six tunable parameters: \textit{Container}, \textit{Data Layout}, \textit{Newton 3}, \textit{Traversal}, \textit{Load Estimator} and \textit{Cell Size Factor} which are combined to form a configuration.
+All different algorithmic implementations for solving N-Body problems are part of the so-called \textit{Algorithm Library} of AutoPas. The Algorithm Library contains different implementations for certain key aspects of the simulation, such as neighbor identification, traversal patterns, memory layouts, and optimization techniques. Currently, AutoPas supports the six tunable parameters: \textit{Container}, \textit{Data Layout}, \textit{Newton 3}, \textit{Traversal}, \textit{Load Estimator} and \textit{Cell Size Factor} which can be combined to create different configurations.
 
 Maintaining a library of different implementations has several benefits: As the library is modular, it is straightforward to add new, potentially hardware-specific, implementations for each key aspect of the simulation. This ensures that the simulation engine remains maintainable and can provide performance portability across a wide range of hardware platforms. The interchangeable nature of the implementations also ensures implicit backward compatibility, making it easy to study the effects of new hardware on existing implementations. Users of the library also benefit from this approach. As AutoPas is able to automatically select the best configuration for their specific use case and hardware setup, users do not need to have a deep understanding of the underlying hardware or software optimizations and can fully focus on the high-level aspects of their simulation~\cite{Tchipev2020}\cite{Gratl2022AutoPas}.
 
@@ -259,7 +257,7 @@ Ideally, the aforementioned overhead of evaluating suboptimal configurations lea
 
 Further evaluation of the data obtained in \cite{lerchner2024} shows that only three out of 184 runs using slight variations of example scenarios provided by \texttt{md-flexible}\footnote{
     \texttt{md-flexible} is a molecular dynamics simulation framework making use of the AutoPas library. It is included in the AutoPas repository and provides a wide range of example scenarios to demonstrate the capabilities of the AutoPas library.
-} with both single and multi-node configurations show any changes in the best configuration after the initial tuning phase. This indicates that all currently provided example scenarios of \texttt{md-flexible} are incapable of demonstrating the benefits of periodic re-tuning and that performing additional tuning phases on these scenarios only increases the total simulation time.
+} show any changes in the best configuration after the initial tuning phase. This effect occurs in both single and multi-node simulations and indicates that all currently provided example scenarios of \texttt{md-flexible} are incapable of demonstrating the benefits of periodic re-tuning.
 
 More complex scenarios, most likely involving multiple MPI ranks and inhomogeneous particle distributions, are necessary to fully demonstrate the benefits of periodic re-tuning. Simulating such inhomogeneous scenarios in an MPI environment increases the chance of varying particle distribution across both MPI ranks and time steps, increasing the likelihood of benefitting from periodic re-tuning on each rank (See \cite{Newcome2023Poster}).
 
@@ -284,7 +282,7 @@ To minimize some of the introduced drawbacks of the auto-tuning process, \cite{e
     \item \textbf{Stopping Further Samples}\\
           As AutoPas evaluates a configuration multiple times to reduce measurement noise, a simple way to implement early stopping would be to stop the evaluation of further samples as soon as it is clear that the performance is significantly worse than the best-known configuration. This approach however requires fully evaluating some samples of a bad configuration.
     \item \textbf{Interrupting the Evaluation}\\
-          A more fine-grained approach, proposed in~\cite{endreport.pdf}, could interrupt the evaluation of a long-running configuration while it is still being evaluated. Such a change would require a big rewrite of AutoPas' internal structure and is not feasible in the short term.
+          A more fine-grained approach, proposed in~\cite{endreport.pdf}, could interrupt the evaluation of a long-running configuration while it is still being evaluated. Such a change would require a big rewrite of AutoPas' internal structure and is therefore not feasible in the short term.
 \end{itemize}
 
 To get a first impression of the potential benefits of an early stopping mechanism, we implemented the first approach into the AutoPas framework\footnote{
@@ -303,9 +301,9 @@ Both described approaches require a user-defined threshold, called $earlyStoppin
         \If{not $\Call{enoughConfidence}{~}$}
         \State \Return
         \EndIf
-        \State $evidencePred \gets \Call{estimateRuntimeFromSamples}{~}$
+        \State $evidenceEstimate \gets \Call{estimateRuntimeFromSamples}{~}$
         \State $bestEvidence \gets \Call{getLatestOptimalConfiguration}{~}$
-        \State $slowdownFactor \gets \frac{evidencePred}{bestEvidence}$
+        \State $slowdownFactor \gets \frac{evidenceEstimate}{bestEvidence}$
         \If{$slowdownFactor > earlyStoppingFactor$}
         \State $abort \gets true$
         \EndIf
@@ -337,9 +335,9 @@ To evaluate the performance of the early stopping mechanism, we perform benchmar
 
 \begin{description}[style=nextline]
     \item[FullSearch (\autoref{fig:full_search})]
-        Early stopping combined with the FullSearch strategy, is able to reduce the total simulation time from 15.86 seconds to 12.58 seconds at $earlyStoppingFactor \approx1.05$. This corresponds to reducing the total simulation time by 20.7\%.
+        Early stopping combined with the FullSearch strategy, is able to reduce the total simulation time from 13.93 seconds to 10.99 seconds at $earlyStoppingFactor \approx1.05$. This corresponds to reducing the total simulation time by 21.1\%.
     \item[PredictiveTuning (\autoref{fig:predictive_tuning})]
-        Early stopping combined with the PredictiveTuning strategy, is able to reduce the total simulation time from 13.93 seconds to 10.99 seconds at $earlyStoppingFactor \approx1.05$. This corresponds to reducing the total simulation time by 21.1\%.
+        Early stopping combined with the PredictiveTuning strategy, is able to reduce the total simulation time from 15.86 seconds to 12.58 seconds at $earlyStoppingFactor \approx1.05$. This corresponds to reducing the total simulation time by 20.7\%.
     \item[FuzzyTuning (\autoref{fig:fuzzy_tuning})]
         Early stopping combined with the FuzzyTuning strategy shows no significant changes in the total simulation time.
 \end{description}
@@ -380,14 +378,14 @@ To evaluate the performance of the early stopping mechanism, we perform benchmar
 
         As the limiting case of $earlyStoppingFactor \rightarrow \infty$ effectively disables the early stopping mechanism, the performance converges to the default implementation without early stopping.
 
-        Interestingly, the limit $earlyStoppingFactor \rightarrow 1$ does not impact the total simulation time negatively. This indicates that the performance prediction provides a reliable estimate of the actual performance even with few samples, and thus even allows for very aggressive early stopping.
+        Interestingly, the limit $earlyStoppingFactor \rightarrow 1$ does not impact the total simulation time negatively. This indicates that \texttt{estimateRuntimeFromSamples()} provides a reliable estimate of the actual performance even with few samples and thus allows for very aggressive early stopping.
 
         In general, the $earlyStoppingFactor$ should however be chosen high enough to provide a sufficient margin to account for measurement noise, while being low enough to stop the evaluation of slow configurations effectively. Based on the benchmark results, $earlyStoppingFactor \approx 1.5$ seems to be a good compromise, as lower thresholds only provide marginal improvements.
 
         It is however unclear whether such a threshold is universally applicable to all scenarios. Additional benchmarking across a broader range of use cases is needed to validate these preliminary findings.
 
     \item[Impact of the Tuning Strategy:]
-        The evaluated benchmarks show that the FullSearch and PredictiveTuning strategies benefit drastically from early stopping. The FullSearch strategy naturally encounters many bad configurations and performs as expected. The PredictiveTuning strategy however can't show its full potential, since the benchmark is too short for the strategy to leave the initial data collection phase, during which it behaves similarly to the FullSearch strategy. This explains the similar performance of both strategies.
+        The evaluated benchmarks show that the FullSearch and PredictiveTuning strategies benefit drastically from early stopping. As the FullSearch strategy naturally encounters many bad configurations, such a big improvement is expected. The PredictiveTuning strategy, on the other hand, is not able to leave the initial data collection phase, as the benchmark is too short. Longer benchmarks are needed to show the differences between FullSearch and PredictiveTuning more clearly.
 
         The FuzzyTuning strategy is unaffected by the early stopping mechanism, as it already performs nearly optimally without early stopping. This indicates that the FuzzyTuning strategy is very effective at avoiding bad configurations, making the early stopping mechanism redundant.
 
@@ -399,10 +397,9 @@ To evaluate the performance of the early stopping mechanism, we perform benchmar
 
 We presented an overview of the AutoPas framework and its auto-tuning capabilities and demonstrated the benefits and challenges of dynamic auto-tuning in molecular dynamics simulations.
 
-Moreover, we investigated the potential of a naive early stopping mechanism to reduce some of the inherent overhead caused by tuning phases and demonstrated that such a mechanism can reduce the total simulation time by up to 21.1\% in specific scenarios with only minor changes to the existing codebase.
+The main contribution of this paper is the introduction of an early stopping mechanism to reduce the overhead of parameter space exploration in the AutoPas framework. Our evaluation shows that such a mechanism can reduce the total simulation time by up to 21.1\% in specific scenarios with only minor changes to the existing codebase, demonstrating the potential of this improvement.
 
-The comparison with established MD engines such as GROMACS, LAMMPS, and ls1 mardyn reveals a fundamental trade-off in software design. While these engines achieve excellent performance through highly specialized implementations, AutoPas offers greater flexibility and adaptability through its modular architecture and dynamic optimization capabilities by accepting some performance overhead.\\
-However, the successful integration of AutoPas into ls1 mardyn and LAMMPS demonstrates that these approaches can be complementary rather than mutually exclusive.
+Further evaluation of the early stopping mechanism across a broader range of use cases is however necessary to validate these preliminary findings and to determine whether the early stopping mechanism is universally applicable to all scenarios.
 
 \newpage
 
